@@ -2,10 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StateManager = void 0;
 /**
- * Manages creation and updates of ioBroker states for Beszel systems.
+ * Manages creation, update and cleanup of ioBroker objects and states for Beszel systems.
  */
 class StateManager {
     adapter;
+    /**
+     * @param adapter The ioBroker adapter instance
+     */
     constructor(adapter) {
         this.adapter = adapter;
     }
@@ -13,7 +16,7 @@ class StateManager {
      * Sanitize a name to a valid ioBroker state ID segment.
      * Lowercase, replace non-alphanumeric with _, max 50 chars, trim underscores.
      *
-     * @param name
+     * @param name Raw name to sanitize
      */
     sanitize(name) {
         return name
@@ -25,10 +28,10 @@ class StateManager {
     /**
      * Update all states for a single system.
      *
-     * @param system
-     * @param stats
-     * @param containers
-     * @param config
+     * @param system Beszel system record
+     * @param stats Latest stats for this system, or undefined if unavailable
+     * @param containers Container records belonging to this system
+     * @param config Current adapter configuration
      */
     async updateSystem(system, stats, containers, config) {
         const sysId = `systems.${this.sanitize(system.name)}`;
@@ -141,7 +144,7 @@ class StateManager {
     /**
      * Remove device objects for systems that are no longer in Beszel.
      *
-     * @param activeSystemNames
+     * @param activeSystemNames Sanitized names of currently active systems
      */
     async cleanupSystems(activeSystemNames) {
         const activeIds = new Set(activeSystemNames.map((n) => `systems.${this.sanitize(n)}`));
@@ -172,8 +175,8 @@ class StateManager {
      * Delete states for metrics that have been disabled in the config.
      * Called on startup to clean up previously-enabled states.
      *
-     * @param systemId
-     * @param config
+     * @param systemId Sanitized system name (the part after "systems.")
+     * @param config Current adapter configuration
      */
     async cleanupMetrics(systemId, config) {
         const sysId = `systems.${systemId}`;

@@ -24,6 +24,11 @@ export class BeszelClient {
   private token: string | null = null;
   private tokenTime = 0;
 
+  /**
+   * @param url Beszel Hub base URL, e.g. http://192.168.1.100:8090
+   * @param username Login username
+   * @param password Login password
+   */
   constructor(url: string, username: string, password: string) {
     // Strip trailing slash
     this.baseUrl = url.replace(/\/+$/, "");
@@ -70,7 +75,7 @@ export class BeszelClient {
    * Fetch the latest 1m stats per system.
    * Returns a Map<systemId, SystemStats>.
    *
-   * @param systemIds
+   * @param systemIds List of system IDs to fetch stats for
    */
   public async getLatestStats(
     systemIds: string[],

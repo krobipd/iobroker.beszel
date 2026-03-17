@@ -10,11 +10,14 @@ type IoBrokerStateCommon = ioBroker.StateCommon;
 type IoBrokerObjectCommon = ioBroker.ObjectCommon;
 
 /**
- * Manages creation and updates of ioBroker states for Beszel systems.
+ * Manages creation, update and cleanup of ioBroker objects and states for Beszel systems.
  */
 export class StateManager {
   private readonly adapter: utils.AdapterInstance;
 
+  /**
+   * @param adapter The ioBroker adapter instance
+   */
   constructor(adapter: utils.AdapterInstance) {
     this.adapter = adapter;
   }
@@ -23,7 +26,7 @@ export class StateManager {
    * Sanitize a name to a valid ioBroker state ID segment.
    * Lowercase, replace non-alphanumeric with _, max 50 chars, trim underscores.
    *
-   * @param name
+   * @param name Raw name to sanitize
    */
   public sanitize(name: string): string {
     return name
@@ -36,10 +39,10 @@ export class StateManager {
   /**
    * Update all states for a single system.
    *
-   * @param system
-   * @param stats
-   * @param containers
-   * @param config
+   * @param system Beszel system record
+   * @param stats Latest stats for this system, or undefined if unavailable
+   * @param containers Container records belonging to this system
+   * @param config Current adapter configuration
    */
   public async updateSystem(
     system: BeszelSystem,
@@ -209,7 +212,7 @@ export class StateManager {
   /**
    * Remove device objects for systems that are no longer in Beszel.
    *
-   * @param activeSystemNames
+   * @param activeSystemNames Sanitized names of currently active systems
    */
   public async cleanupSystems(activeSystemNames: string[]): Promise<void> {
     const activeIds = new Set(
@@ -249,8 +252,8 @@ export class StateManager {
    * Delete states for metrics that have been disabled in the config.
    * Called on startup to clean up previously-enabled states.
    *
-   * @param systemId
-   * @param config
+   * @param systemId Sanitized system name (the part after "systems.")
+   * @param config Current adapter configuration
    */
   public async cleanupMetrics(
     systemId: string,

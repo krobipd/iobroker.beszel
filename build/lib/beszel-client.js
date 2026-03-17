@@ -48,6 +48,11 @@ class BeszelClient {
     password;
     token = null;
     tokenTime = 0;
+    /**
+     * @param url Beszel Hub base URL, e.g. http://192.168.1.100:8090
+     * @param username Login username
+     * @param password Login password
+     */
     constructor(url, username, password) {
         // Strip trailing slash
         this.baseUrl = url.replace(/\/+$/, "");
@@ -86,7 +91,7 @@ class BeszelClient {
      * Fetch the latest 1m stats per system.
      * Returns a Map<systemId, SystemStats>.
      *
-     * @param systemIds
+     * @param systemIds List of system IDs to fetch stats for
      */
     async getLatestStats(systemIds) {
         if (systemIds.length === 0) {
