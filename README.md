@@ -1,6 +1,6 @@
 # ioBroker.beszel
 
-![Version](https://img.shields.io/badge/version-0.1.4-blue)
+![Version](https://img.shields.io/badge/version-0.1.5-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -150,6 +150,9 @@ admin/
 ---
 
 ## Changelog
+
+### 0.1.5 (2026-03-17)
+- Migrate to @alcalzone/release-script, enable npm Trusted Publishing
 
 ### 0.1.4 (2026-03-17)
 - Fix all repochecker issues; rename repo to ioBroker.beszel; add responsive grid sizes
