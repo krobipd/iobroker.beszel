@@ -3,6 +3,19 @@
 		"name": "beszel",
 		"version": "0.1.1",
 		"news": {
+			"0.1.1": {
+				"en": "Fix: disabled metric states are now removed on adapter restart",
+				"de": "Fix: deaktivierte Metric-Datenpunkte werden beim Neustart gelöscht",
+				"ru": "Исправление: отключённые метрики удаляются при перезапуске",
+				"pt": "Correção: estados de métricas desativadas são removidos ao reiniciar",
+				"nl": "Fix: uitgeschakelde metrische staten worden verwijderd bij herstart",
+				"fr": "Correction: les états de métriques désactivées sont supprimés au redémarrage",
+				"it": "Fix: gli stati delle metriche disabilitate vengono rimossi al riavvio",
+				"es": "Corrección: los estados de métricas desactivadas se eliminan al reiniciar",
+				"pl": "Poprawka: wyłączone stany metryk są usuwane przy ponownym uruchomieniu",
+				"uk": "Виправлення: вимкнені стани метрик видаляються при перезапуску",
+				"zh-cn": "修复：适配器重启时删除已禁用的指标状态"
+			},
 			"0.1.0": {
 				"en": "Initial release",
 				"de": "Erstveröffentlichung",
