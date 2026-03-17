@@ -163,7 +163,22 @@ admin/
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md).
+### 0.1.4 (2026-03-17)
+- Fix all repochecker issues; rename repo to ioBroker.beszel; add responsive grid sizes
+
+### 0.1.3 (2026-03-17)
+- Fix all JSDoc warnings; update dependencies
+
+### 0.1.2 (2026-03-17)
+- Fix: add missing cpu_steal state to CPU breakdown metric
+
+### 0.1.1 (2026-03-17)
+- Fix: disabled metric states are now deleted on adapter restart
+
+### 0.1.0 (2026-03-17)
+- Initial release
+
+Full details: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
