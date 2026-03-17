@@ -2,6 +2,9 @@
 
 ## **WORK IN PROGRESS**
 
+- Migrate to @alcalzone/release-script for automated releases
+- Enable npm Trusted Publishing (OIDC), remove legacy npm token
+
 ## 0.1.4 (2026-03-17)
 ### Fixed
 - Fix all ioBroker repochecker issues (E0003, E1020, E1069, E1105, E2004, E5507, E6005, E6006, E9502)
