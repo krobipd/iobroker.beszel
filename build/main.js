@@ -79,6 +79,22 @@ class BeszelAdapter extends utils.Adapter {
         }
         this.client = new beszel_client_js_1.BeszelClient(config.url, config.username, config.password);
         this.stateManager = new state_manager_js_1.StateManager(this);
+        // Cleanup disabled metric states for existing systems (config may have changed)
+        const existingObjects = await this.getObjectViewAsync("system", "device", {
+            startkey: `${this.namespace}.systems.`,
+            endkey: `${this.namespace}.systems.\u9999`,
+        });
+        if (existingObjects?.rows) {
+            for (const row of existingObjects.rows) {
+                const relId = row.id.startsWith(`${this.namespace}.`)
+                    ? row.id.slice(this.namespace.length + 1)
+                    : row.id;
+                const parts = relId.split(".");
+                if (parts.length === 2 && parts[0] === "systems") {
+                    await this.stateManager.cleanupMetrics(parts[1], config);
+                }
+            }
+        }
         // Initial poll
         await this.poll();
         // Set up recurring poll
