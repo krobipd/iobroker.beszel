@@ -1,6 +1,6 @@
 # ioBroker.beszel
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Version](https://img.shields.io/badge/version-0.1.3-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -170,7 +170,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 ## Support
 
 - [ioBroker Forum](https://forum.iobroker.net/)
-- [GitHub Issues](https://github.com/krobipd/iobroker.beszel/issues)
+- [GitHub Issues](https://github.com/krobipd/ioBroker.beszel/issues)
 
 If this adapter is useful to you, consider a small donation:
 
@@ -179,6 +179,8 @@ If this adapter is useful to you, consider a small donation:
 ---
 
 ## License
+
+Copyright (c) 2026 krobi <krobi@power-dreams.com>
 
 MIT License — see [LICENSE](LICENSE)
 

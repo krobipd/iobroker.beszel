@@ -11,8 +11,11 @@
                     "label": "label_url",
                     "help": "help_url",
                     "placeholder": "http://192.168.1.100:8090",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 8
+                    "md": 8,
+                    "lg": 8,
+                    "xl": 8
                 },
                 "pollInterval": {
                     "type": "number",
@@ -21,20 +24,29 @@
                     "min": 10,
                     "max": 300,
                     "default": 60,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 4
+                    "md": 4,
+                    "lg": 4,
+                    "xl": 4
                 },
                 "username": {
                     "type": "text",
                     "label": "label_username",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "password": {
                     "type": "password",
                     "label": "label_password",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "checkConnection": {
                     "type": "sendTo",
@@ -45,8 +57,11 @@
                         "okText": "msg_connectionOk",
                         "errorText": "msg_connectionFailed"
                     },
+                    "xs": 12,
                     "sm": 12,
-                    "md": 4
+                    "md": 4,
+                    "lg": 4,
+                    "xl": 4
                 }
             }
         },
@@ -58,181 +73,262 @@
                     "type": "header",
                     "text": "header_system",
                     "size": 5,
-                    "sm": 12
+                    "xs": 12,
+                    "sm": 12,
+                    "lg": 12,
+                    "xl": 12
                 },
                 "metrics_uptime": {
                     "type": "checkbox",
                     "label": "metric_uptime",
                     "default": true,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "metrics_agentVersion": {
                     "type": "checkbox",
                     "label": "metric_agentVersion",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "metrics_services": {
                     "type": "checkbox",
                     "label": "metric_services",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "header_cpu": {
                     "type": "header",
                     "text": "header_cpu",
                     "size": 5,
-                    "sm": 12
+                    "xs": 12,
+                    "sm": 12,
+                    "lg": 12,
+                    "xl": 12
                 },
                 "metrics_cpu": {
                     "type": "checkbox",
                     "label": "metric_cpu",
                     "default": true,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "metrics_loadAvg": {
                     "type": "checkbox",
                     "label": "metric_loadAvg",
                     "default": true,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "metrics_cpuBreakdown": {
                     "type": "checkbox",
                     "label": "metric_cpuBreakdown",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "header_memory": {
                     "type": "header",
                     "text": "header_memory",
                     "size": 5,
-                    "sm": 12
+                    "xs": 12,
+                    "sm": 12,
+                    "lg": 12,
+                    "xl": 12
                 },
                 "metrics_memory": {
                     "type": "checkbox",
                     "label": "metric_memory",
                     "default": true,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "metrics_memoryDetails": {
                     "type": "checkbox",
                     "label": "metric_memoryDetails",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "metrics_swap": {
                     "type": "checkbox",
                     "label": "metric_swap",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "header_disk": {
                     "type": "header",
                     "text": "header_disk",
                     "size": 5,
-                    "sm": 12
+                    "xs": 12,
+                    "sm": 12,
+                    "lg": 12,
+                    "xl": 12
                 },
                 "metrics_disk": {
                     "type": "checkbox",
                     "label": "metric_disk",
                     "default": true,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "metrics_diskSpeed": {
                     "type": "checkbox",
                     "label": "metric_diskSpeed",
                     "default": true,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "metrics_extraFs": {
                     "type": "checkbox",
                     "label": "metric_extraFs",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "header_network": {
                     "type": "header",
                     "text": "header_network",
                     "size": 5,
-                    "sm": 12
+                    "xs": 12,
+                    "sm": 12,
+                    "lg": 12,
+                    "xl": 12
                 },
                 "metrics_network": {
                     "type": "checkbox",
                     "label": "metric_network",
                     "default": true,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "header_temperature": {
                     "type": "header",
                     "text": "header_temperature",
                     "size": 5,
-                    "sm": 12
+                    "xs": 12,
+                    "sm": 12,
+                    "lg": 12,
+                    "xl": 12
                 },
                 "metrics_temperature": {
                     "type": "checkbox",
                     "label": "metric_temperature",
                     "default": true,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "metrics_temperatureDetails": {
                     "type": "checkbox",
                     "label": "metric_temperatureDetails",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "header_gpu": {
                     "type": "header",
                     "text": "header_gpu",
                     "size": 5,
-                    "sm": 12
+                    "xs": 12,
+                    "sm": 12,
+                    "lg": 12,
+                    "xl": 12
                 },
                 "metrics_gpu": {
                     "type": "checkbox",
                     "label": "metric_gpu",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "header_containers": {
                     "type": "header",
                     "text": "header_containers",
                     "size": 5,
-                    "sm": 12
+                    "xs": 12,
+                    "sm": 12,
+                    "lg": 12,
+                    "xl": 12
                 },
                 "metrics_containers": {
                     "type": "checkbox",
                     "label": "metric_containers",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "header_battery": {
                     "type": "header",
                     "text": "header_battery",
                     "size": 5,
-                    "sm": 12
+                    "xs": 12,
+                    "sm": 12,
+                    "lg": 12,
+                    "xl": 12
                 },
                 "metrics_battery": {
                     "type": "checkbox",
                     "label": "metric_battery",
                     "default": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
                 }
             }
         }
