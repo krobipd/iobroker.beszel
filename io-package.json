@@ -1,168 +1,181 @@
 {
-	"common": {
-		"name": "beszel",
-		"version": "0.1.4",
-		"news": {
-			"0.1.4": {
-				"en": "Fix all repochecker issues; rename repo to ioBroker.beszel; add responsive grid sizes",
-				"de": "Alle Repochecker-Fehler behoben; Repo umbenannt zu ioBroker.beszel; responsive Grid-Größen ergänzt",
-				"ru": "Исправлены все ошибки репочекера; репозиторий переименован в ioBroker.beszel",
-				"pt": "Corrigidos todos os problemas do repochecker; repositório renomeado para ioBroker.beszel",
-				"nl": "Alle repochecker-problemen opgelost; repository hernoemd naar ioBroker.beszel",
-				"fr": "Correction de tous les problèmes du repochecker; dépôt renommé en ioBroker.beszel",
-				"it": "Corretti tutti i problemi del repochecker; repository rinominato in ioBroker.beszel",
-				"es": "Corregidos todos los problemas del repochecker; repositorio renombrado a ioBroker.beszel",
-				"pl": "Poprawiono wszystkie błędy repochecker; repozytorium zmieniono na ioBroker.beszel",
-				"uk": "Виправлено всі помилки репочекера; репозиторій перейменовано на ioBroker.beszel",
-				"zh-cn": "修复所有 repochecker 问题；仓库重命名为 ioBroker.beszel"
-			},
-			"0.1.3": {
-				"en": "Fix all JSDoc warnings; update dependencies",
-				"de": "Alle JSDoc-Warnungen behoben; Abhängigkeiten aktualisiert",
-				"ru": "Исправлены все предупреждения JSDoc; обновлены зависимости",
-				"pt": "Corrigidos todos os avisos JSDoc; dependências atualizadas",
-				"nl": "Alle JSDoc-waarschuwingen opgelost; afhankelijkheden bijgewerkt",
-				"fr": "Correction de tous les avertissements JSDoc; dépendances mises à jour",
-				"it": "Corretti tutti gli avvisi JSDoc; dipendenze aggiornate",
-				"es": "Corregidas todas las advertencias JSDoc; dependencias actualizadas",
-				"pl": "Poprawiono wszystkie ostrzeżenia JSDoc; zaktualizowano zależności",
-				"uk": "Виправлено всі попередження JSDoc; оновлено залежності",
-				"zh-cn": "修复所有 JSDoc 警告；更新依赖项"
-			},
-			"0.1.2": {
-				"en": "Fix: add missing cpu_steal state to CPU breakdown metric",
-				"de": "Fix: fehlender cpu_steal Datenpunkt bei CPU Breakdown ergänzt",
-				"ru": "Исправление: добавлено отсутствующее состояние cpu_steal в разбивке CPU",
-				"pt": "Correção: adicionado estado cpu_steal ausente na métrica de detalhamento da CPU",
-				"nl": "Fix: ontbrekende cpu_steal staat toegevoegd aan CPU breakdown metric",
-				"fr": "Correction: état cpu_steal manquant ajouté à la métrique de détail CPU",
-				"it": "Fix: aggiunto lo stato cpu_steal mancante nella metrica di dettaglio CPU",
-				"es": "Corrección: agregado el estado cpu_steal faltante en la métrica de desglose CPU",
-				"pl": "Poprawka: dodano brakujący stan cpu_steal w metryce szczegółów CPU",
-				"uk": "Виправлення: додано відсутній стан cpu_steal у деталізації CPU",
-				"zh-cn": "修复：在 CPU 详细指标中添加缺失的 cpu_steal 状态"
-			}
-		},
-		"titleLang": {
-			"en": "Beszel Monitor",
-			"de": "Beszel Monitor",
-			"ru": "Монитор Beszel",
-			"pt": "Monitor Beszel",
-			"nl": "Beszel Monitor",
-			"fr": "Moniteur Beszel",
-			"it": "Monitor Beszel",
-			"es": "Monitor Beszel",
-			"pl": "Monitor Beszel",
-			"uk": "Монітор Beszel",
-			"zh-cn": "Beszel 监控"
-		},
-		"desc": {
-			"en": "Connects to a Beszel Hub and exposes server metrics as ioBroker states",
-			"de": "Verbindet sich mit einem Beszel Hub und stellt Server-Metriken als ioBroker-Datenpunkte bereit",
-			"ru": "Подключается к Beszel Hub и предоставляет метрики сервера как состояния ioBroker",
-			"pt": "Conecta-se a um Beszel Hub e expõe métricas do servidor como estados ioBroker",
-			"nl": "Verbindt met een Beszel Hub en stelt servermetrisch beschikbaar als ioBroker-staten",
-			"fr": "Se connecte à un Beszel Hub et expose les métriques du serveur comme états ioBroker",
-			"it": "Si connette a un Beszel Hub ed espone le metriche del server come stati ioBroker",
-			"es": "Se conecta a un Beszel Hub y expone métricas del servidor como estados ioBroker",
-			"pl": "Łączy się z Beszel Hub i udostępnia metryki serwera jako stany ioBroker",
-			"uk": "Підключається до Beszel Hub та надає метрики сервера як стани ioBroker",
-			"zh-cn": "连接到 Beszel Hub 并将服务器指标作为 ioBroker 状态公开"
-		},
-		"authors": [
-			"krobi <krobi@power-dreams.com>"
-		],
-		"keywords": [
-			"beszel",
-			"monitoring",
-			"server",
-			"metrics",
-			"hardware"
-		],
-		"licenseInformation": {
-			"license": "MIT",
-			"type": "free"
-		},
-		"platform": "Javascript/Node.js",
-		"icon": "beszel.svg",
-		"extIcon": "https://raw.githubusercontent.com/krobipd/ioBroker.beszel/main/admin/beszel.svg",
-		"readme": "https://github.com/krobipd/ioBroker.beszel/blob/main/README.md",
-		"enabled": true,
-		"tier": 3,
-		"loglevel": "info",
-		"mode": "daemon",
-		"type": "hardware",
-		"compact": true,
-		"connectionType": "local",
-		"dataSource": "poll",
-		"adminUI": {
-			"config": "json"
-		},
-		"supportedMessages": {
-			"stopInstance": true
-		},
-		"dependencies": [
-			{
-				"js-controller": ">=7.0.0"
-			}
-		],
-		"globalDependencies": [
-			{
-				"admin": ">=7.6.20"
-			}
-		]
-	},
-	"instanceObjects": [
-		{
-			"_id": "info",
-			"type": "channel",
-			"common": {
-				"name": "Information"
-			},
-			"native": {}
-		},
-		{
-			"_id": "info.connection",
-			"type": "state",
-			"common": {
-				"name": "Connection status",
-				"type": "boolean",
-				"role": "indicator.connected",
-				"read": true,
-				"write": false,
-				"def": false
-			},
-			"native": {}
-		}
-	],
-	"encryptedNative": [
-		"password"
-	],
-	"protectedNative": [
-		"password"
-	],
-	"native": {
-		"url": "",
-		"username": "",
-		"password": "",
-		"pollInterval": 60,
-		"metrics_uptime": true,
-		"metrics_agentVersion": false,
-		"metrics_services": false,
-		"metrics_cpu": true,
-		"metrics_loadAvg": true,
-		"metrics_cpuBreakdown": false,
-		"metrics_memory": true,
-		"metrics_memoryDetails": false,
-		"metrics_swap": false,
-		"metrics_disk": true,
-		"metrics_diskSpeed": true,
-		"metrics_extraFs": false,
-		"metrics_network": true,
-		"metrics_temperature": true,
-		"metrics_temperatureDetails": false,
-		"metrics_gpu": false,
-		"metrics_containers": false,
-		"metrics_battery": false
-	}
+  "common": {
+    "name": "beszel",
+    "version": "0.1.5",
+    "news": {
+      "0.1.5": {
+        "en": "Migrate to @alcalzone/release-script for automated releases\nEnable npm Trusted Publishing (OIDC), remove legacy npm token",
+        "de": "Migration auf @alcalzone/Release-script für automatisierte Versionen\nAktiviere npm Trusted Publishing (OIDC), legacy npm token",
+        "ru": "Migrate to @alcalzone/releasescript для автоматизированных релизов\nВключить npm Trusted Publishing (OIDC), удалить устаревший токен npm",
+        "pt": "Migrar para @alcalzone/release-script para versões automatizadas\nActivar a publicação confiável do npm (OIDC), remover o símbolo legado do npm",
+        "nl": "Migreren naar @alcalzone/release-script voor geautomatiseerde releases\nNpm Trusted Publishing (OIDC) inschakelen, legacy npm token verwijderen",
+        "fr": "Migrer vers @alcalzone/release-script pour les versions automatisées\nActiver npm Trusted Publishing (OIDC), supprimer le legs npm token",
+        "it": "Migrare a @alcalzone/release-script per le versioni automatizzate\nAbilitare npm Trusted Publishing (OIDC), rimuovere il token npm legacy",
+        "es": "Migrar a @alcalzone/release-script para versiones automatizadas\nActivar npm Trusted Publishing (OIDC), eliminar el legado npm token",
+        "pl": "Migrate to @ alcalzone / release- script for automatic releases\nWłącz npm Zaufane Publishing (OIDC), usuń poprzednią npm token",
+        "uk": "Migrate to @alcalzone/видання для автоматизованих релізів\nУвімкнути npm Trusted Publishing (OIDC), видалити дані npm token",
+        "zh-cn": "移动到 @alcalzone/ 释放- 标记用于自动发布\n启用 npm 信任的出版( OIDC), 删除遗留 npm 令牌"
+      },
+      "0.1.4": {
+        "en": "Fix all repochecker issues; rename repo to ioBroker.beszel; add responsive grid sizes",
+        "de": "Alle Repochecker-Fehler behoben; Repo umbenannt zu ioBroker.beszel; responsive Grid-Größen ergänzt",
+        "ru": "Исправлены все ошибки репочекера; репозиторий переименован в ioBroker.beszel",
+        "pt": "Corrigidos todos os problemas do repochecker; repositório renomeado para ioBroker.beszel",
+        "nl": "Alle repochecker-problemen opgelost; repository hernoemd naar ioBroker.beszel",
+        "fr": "Correction de tous les problèmes du repochecker; dépôt renommé en ioBroker.beszel",
+        "it": "Corretti tutti i problemi del repochecker; repository rinominato in ioBroker.beszel",
+        "es": "Corregidos todos los problemas del repochecker; repositorio renombrado a ioBroker.beszel",
+        "pl": "Poprawiono wszystkie błędy repochecker; repozytorium zmieniono na ioBroker.beszel",
+        "uk": "Виправлено всі помилки репочекера; репозиторій перейменовано на ioBroker.beszel",
+        "zh-cn": "修复所有 repochecker 问题；仓库重命名为 ioBroker.beszel"
+      },
+      "0.1.3": {
+        "en": "Fix all JSDoc warnings; update dependencies",
+        "de": "Alle JSDoc-Warnungen behoben; Abhängigkeiten aktualisiert",
+        "ru": "Исправлены все предупреждения JSDoc; обновлены зависимости",
+        "pt": "Corrigidos todos os avisos JSDoc; dependências atualizadas",
+        "nl": "Alle JSDoc-waarschuwingen opgelost; afhankelijkheden bijgewerkt",
+        "fr": "Correction de tous les avertissements JSDoc; dépendances mises à jour",
+        "it": "Corretti tutti gli avvisi JSDoc; dipendenze aggiornate",
+        "es": "Corregidas todas las advertencias JSDoc; dependencias actualizadas",
+        "pl": "Poprawiono wszystkie ostrzeżenia JSDoc; zaktualizowano zależności",
+        "uk": "Виправлено всі попередження JSDoc; оновлено залежності",
+        "zh-cn": "修复所有 JSDoc 警告；更新依赖项"
+      },
+      "0.1.2": {
+        "en": "Fix: add missing cpu_steal state to CPU breakdown metric",
+        "de": "Fix: fehlender cpu_steal Datenpunkt bei CPU Breakdown ergänzt",
+        "ru": "Исправление: добавлено отсутствующее состояние cpu_steal в разбивке CPU",
+        "pt": "Correção: adicionado estado cpu_steal ausente na métrica de detalhamento da CPU",
+        "nl": "Fix: ontbrekende cpu_steal staat toegevoegd aan CPU breakdown metric",
+        "fr": "Correction: état cpu_steal manquant ajouté à la métrique de détail CPU",
+        "it": "Fix: aggiunto lo stato cpu_steal mancante nella metrica di dettaglio CPU",
+        "es": "Corrección: agregado el estado cpu_steal faltante en la métrica de desglose CPU",
+        "pl": "Poprawka: dodano brakujący stan cpu_steal w metryce szczegółów CPU",
+        "uk": "Виправлення: додано відсутній стан cpu_steal у деталізації CPU",
+        "zh-cn": "修复：在 CPU 详细指标中添加缺失的 cpu_steal 状态"
+      }
+    },
+    "titleLang": {
+      "en": "Beszel Monitor",
+      "de": "Beszel Monitor",
+      "ru": "Монитор Beszel",
+      "pt": "Monitor Beszel",
+      "nl": "Beszel Monitor",
+      "fr": "Moniteur Beszel",
+      "it": "Monitor Beszel",
+      "es": "Monitor Beszel",
+      "pl": "Monitor Beszel",
+      "uk": "Монітор Beszel",
+      "zh-cn": "Beszel 监控"
+    },
+    "desc": {
+      "en": "Connects to a Beszel Hub and exposes server metrics as ioBroker states",
+      "de": "Verbindet sich mit einem Beszel Hub und stellt Server-Metriken als ioBroker-Datenpunkte bereit",
+      "ru": "Подключается к Beszel Hub и предоставляет метрики сервера как состояния ioBroker",
+      "pt": "Conecta-se a um Beszel Hub e expõe métricas do servidor como estados ioBroker",
+      "nl": "Verbindt met een Beszel Hub en stelt servermetrisch beschikbaar als ioBroker-staten",
+      "fr": "Se connecte à un Beszel Hub et expose les métriques du serveur comme états ioBroker",
+      "it": "Si connette a un Beszel Hub ed espone le metriche del server come stati ioBroker",
+      "es": "Se conecta a un Beszel Hub y expone métricas del servidor como estados ioBroker",
+      "pl": "Łączy się z Beszel Hub i udostępnia metryki serwera jako stany ioBroker",
+      "uk": "Підключається до Beszel Hub та надає метрики сервера як стани ioBroker",
+      "zh-cn": "连接到 Beszel Hub 并将服务器指标作为 ioBroker 状态公开"
+    },
+    "authors": [
+      "krobi <krobi@power-dreams.com>"
+    ],
+    "keywords": [
+      "beszel",
+      "monitoring",
+      "server",
+      "metrics",
+      "hardware"
+    ],
+    "licenseInformation": {
+      "license": "MIT",
+      "type": "free"
+    },
+    "platform": "Javascript/Node.js",
+    "icon": "beszel.svg",
+    "extIcon": "https://raw.githubusercontent.com/krobipd/ioBroker.beszel/main/admin/beszel.svg",
+    "readme": "https://github.com/krobipd/ioBroker.beszel/blob/main/README.md",
+    "enabled": true,
+    "tier": 3,
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "hardware",
+    "compact": true,
+    "connectionType": "local",
+    "dataSource": "poll",
+    "adminUI": {
+      "config": "json"
+    },
+    "supportedMessages": {
+      "stopInstance": true
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=7.0.0"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=7.6.20"
+      }
+    ]
+  },
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "name": "Connection status",
+        "type": "boolean",
+        "role": "indicator.connected",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ],
+  "encryptedNative": [
+    "password"
+  ],
+  "protectedNative": [
+    "password"
+  ],
+  "native": {
+    "url": "",
+    "username": "",
+    "password": "",
+    "pollInterval": 60,
+    "metrics_uptime": true,
+    "metrics_agentVersion": false,
+    "metrics_services": false,
+    "metrics_cpu": true,
+    "metrics_loadAvg": true,
+    "metrics_cpuBreakdown": false,
+    "metrics_memory": true,
+    "metrics_memoryDetails": false,
+    "metrics_swap": false,
+    "metrics_disk": true,
+    "metrics_diskSpeed": true,
+    "metrics_extraFs": false,
+    "metrics_network": true,
+    "metrics_temperature": true,
+    "metrics_temperatureDetails": false,
+    "metrics_gpu": false,
+    "metrics_containers": false,
+    "metrics_battery": false
+  }
 }
