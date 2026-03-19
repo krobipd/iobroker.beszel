@@ -8,7 +8,7 @@
 ![Installations](https://iobroker.live/badges/beszel-installed.svg)
 [![PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/krobipd)
 
-![Logo](https://raw.githubusercontent.com/krobipd/ioBroker.beszel/main/admin/beszel.svg)
+<img src="https://raw.githubusercontent.com/krobipd/ioBroker.beszel/main/admin/beszel.svg" width="100" />
 
 Connects to a [Beszel](https://github.com/henrygd/beszel) Hub and exposes server monitoring metrics for all registered systems as ioBroker states.
 
