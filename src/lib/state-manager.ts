@@ -211,7 +211,7 @@ export class StateManager {
         parts[0] === "systems" &&
         !activeIds.has(relativeId)
       ) {
-        this.adapter.log.info(`Removing stale system: ${relativeId}`);
+        this.adapter.log.debug(`Removing stale system: ${relativeId}`);
         await this.adapter.delObjectAsync(relativeId, { recursive: true });
       }
     }

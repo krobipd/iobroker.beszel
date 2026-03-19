@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.1.8",
+    "version": "0.1.9",
     "news": {
+      "0.1.9": {
+        "en": "Logging cleanup: stale system removal moved to debug level",
+        "de": "Logging-Bereinigung: Entfernung veralteter Systeme auf Debug-Level verschoben",
+        "ru": "Очистка логирования: удаление устаревших систем перенесено на уровень debug",
+        "pt": "Limpeza de logging: remoção de sistemas obsoletos movida para nível debug",
+        "nl": "Logging opruiming: verwijdering van verouderde systemen verplaatst naar debug-niveau",
+        "fr": "Nettoyage du logging: suppression des systèmes obsolètes déplacée au niveau debug",
+        "it": "Pulizia logging: rimozione di sistemi obsoleti spostata al livello debug",
+        "es": "Limpieza de logging: eliminación de sistemas obsoletos movida al nivel debug",
+        "pl": "Czyszczenie logowania: usuwanie przestarzałych systemów przeniesione na poziom debug",
+        "uk": "Очищення логування: видалення застарілих систем переміщено на рівень debug",
+        "zh-cn": "日志清理：将过期系统的删除移至debug级别"
+      },
       "0.1.8": {
         "en": "Add online/offline indicator to system device folders",
         "de": "Online/Offline-Anzeige zu System-Geräteordnern hinzugefügt",

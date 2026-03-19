@@ -121,6 +121,9 @@ beszel.0.
 
 ## Changelog
 
+### 0.1.9 (2026-03-19)
+- Logging cleanup: stale system removal moved to debug level
+
 ### 0.1.8 (2026-03-19)
 - Add online/offline indicator to system device folders
 
