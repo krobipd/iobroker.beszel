@@ -1,7 +1,6 @@
 {
     "tab_connection": "Connessione",
     "tab_metrics": "Metriche",
-
     "label_url": "URL Beszel Hub",
     "help_url": "URL del tuo Beszel Hub (es. http://192.168.1.100:8090)",
     "label_username": "Nome utente",
@@ -11,7 +10,6 @@
     "btn_checkConnection": "Testa connessione",
     "msg_connectionOk": "Connessione riuscita",
     "msg_connectionFailed": "Connessione fallita",
-
     "header_system": "Sistema",
     "header_cpu": "CPU",
     "header_memory": "Memoria",
@@ -21,7 +19,6 @@
     "header_gpu": "GPU",
     "header_containers": "Contenitori",
     "header_battery": "Batteria",
-
     "metric_uptime": "Tempo di attività",
     "metric_agentVersion": "Versione agente",
     "metric_services": "Servizi Systemd (totale / falliti)",
@@ -39,5 +36,9 @@
     "metric_temperatureDetails": "Sensori di temperatura individuali",
     "metric_gpu": "Metriche GPU (utilizzo, memoria, potenza)",
     "metric_containers": "Monitoraggio contenitori (Docker / Podman)",
-    "metric_battery": "Stato batteria"
+    "metric_battery": "Stato batteria",
+    "aboutTab": "Info",
+    "aboutHeader": "Supporta questo adapter",
+    "aboutInfo": "Questo adapter è gratuito e open source. Se lo trovi utile, considera di supportare lo sviluppo con una piccola donazione.",
+    "donateButton": "Dona tramite PayPal"
 }

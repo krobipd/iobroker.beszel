@@ -1,7 +1,6 @@
 {
     "tab_connection": "Verbinding",
     "tab_metrics": "Meetwaarden",
-
     "label_url": "Beszel Hub URL",
     "help_url": "URL van uw Beszel Hub (bijv. http://192.168.1.100:8090)",
     "label_username": "Gebruikersnaam",
@@ -11,7 +10,6 @@
     "btn_checkConnection": "Verbinding testen",
     "msg_connectionOk": "Verbinding geslaagd",
     "msg_connectionFailed": "Verbinding mislukt",
-
     "header_system": "Systeem",
     "header_cpu": "CPU",
     "header_memory": "Geheugen",
@@ -21,7 +19,6 @@
     "header_gpu": "GPU",
     "header_containers": "Containers",
     "header_battery": "Batterij",
-
     "metric_uptime": "Bedrijfstijd",
     "metric_agentVersion": "Agentversie",
     "metric_services": "Systemd-services (totaal / mislukt)",
@@ -39,5 +36,9 @@
     "metric_temperatureDetails": "Afzonderlijke temperatuursensoren",
     "metric_gpu": "GPU-meetwaarden (gebruik, geheugen, vermogen)",
     "metric_containers": "Containermonitoring (Docker / Podman)",
-    "metric_battery": "Batterijstatus"
+    "metric_battery": "Batterijstatus",
+    "aboutTab": "Over",
+    "aboutHeader": "Steun deze adapter",
+    "aboutInfo": "Deze adapter is gratis en open source. Als je hem nuttig vindt, overweeg dan de ontwikkeling te steunen met een kleine donatie.",
+    "donateButton": "Doneer via PayPal"
 }

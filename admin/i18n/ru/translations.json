@@ -1,7 +1,6 @@
 {
     "tab_connection": "Подключение",
     "tab_metrics": "Метрики",
-
     "label_url": "URL Beszel Hub",
     "help_url": "URL вашего Beszel Hub (например http://192.168.1.100:8090)",
     "label_username": "Имя пользователя",
@@ -11,7 +10,6 @@
     "btn_checkConnection": "Проверить подключение",
     "msg_connectionOk": "Подключение успешно",
     "msg_connectionFailed": "Ошибка подключения",
-
     "header_system": "Система",
     "header_cpu": "ЦПУ",
     "header_memory": "Память",
@@ -21,7 +19,6 @@
     "header_gpu": "GPU",
     "header_containers": "Контейнеры",
     "header_battery": "Аккумулятор",
-
     "metric_uptime": "Время работы",
     "metric_agentVersion": "Версия агента",
     "metric_services": "Службы Systemd (всего / сбоев)",
@@ -39,5 +36,9 @@
     "metric_temperatureDetails": "Отдельные датчики температуры",
     "metric_gpu": "Метрики GPU (загрузка, память, мощность)",
     "metric_containers": "Мониторинг контейнеров (Docker / Podman)",
-    "metric_battery": "Состояние аккумулятора"
+    "metric_battery": "Состояние аккумулятора",
+    "aboutTab": "О программе",
+    "aboutHeader": "Поддержать этот адаптер",
+    "aboutInfo": "Этот адаптер бесплатный и с открытым исходным кодом. Если он вам полезен, поддержите разработку небольшим пожертвованием.",
+    "donateButton": "Пожертвовать через PayPal"
 }
