@@ -122,6 +122,9 @@ beszel.0.
 
 ## Changelog
 
+### 0.2.1 (2026-03-28)
+- Error deduplication, auth backoff, protect against empty system list deletion
+
 ### 0.2.0 (2026-03-28)
 - Adapter timer methods, synchronous onUnload, merge About tab, Windows/macOS CI, full MIT license
 
@@ -139,9 +142,6 @@ beszel.0.
 
 ### 0.1.5 (2026-03-17)
 - Migrate to @alcalzone/release-script, enable npm Trusted Publishing
-
-### 0.1.4 (2026-03-17)
-- Fix all repochecker issues; rename repo to ioBroker.beszel; add responsive grid sizes
 
 Older changelog: [CHANGELOG.md](CHANGELOG.md)
 

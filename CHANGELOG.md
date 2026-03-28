@@ -1,6 +1,12 @@
 # Changelog
 ## **WORK IN PROGRESS**
 
+## 0.2.1 (2026-03-28)
+
+- Error deduplication: repeated errors are logged at debug level instead of flooding the error log
+- Auth backoff: after 3 failed auth attempts, suppress further error logs
+- Protect against empty system list: don't delete all devices when API temporarily returns zero systems
+
 ## 0.2.0 (2026-03-28)
 
 - Use adapter timer methods (setInterval/clearInterval) instead of native timers

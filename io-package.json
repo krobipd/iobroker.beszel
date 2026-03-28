@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "news": {
+      "0.2.1": {
+        "en": "Error handling: dedup repeated errors, auth backoff, protect against empty system list deletion",
+        "de": "Fehlerbehandlung: Doppelte Fehler unterdrücken, Auth-Backoff, Schutz gegen Löschung bei leerer Systemliste",
+        "ru": "Обработка ошибок: дедупликация повторяющихся ошибок, откат аутентификации, защита от удаления при пустом списке систем",
+        "pt": "Tratamento de erros: deduplicação de erros repetidos, backoff de autenticação, proteção contra exclusão com lista vazia",
+        "nl": "Foutafhandeling: deduplicatie van herhaalde fouten, auth-backoff, bescherming tegen verwijdering bij lege systeemlijst",
+        "fr": "Gestion des erreurs: dédoublonnage des erreurs répétées, backoff d'authentification, protection contre la suppression avec liste vide",
+        "it": "Gestione errori: deduplicazione errori ripetuti, backoff autenticazione, protezione contro cancellazione con lista vuota",
+        "es": "Manejo de errores: deduplicación de errores repetidos, backoff de autenticación, protección contra eliminación con lista vacía",
+        "pl": "Obsługa błędów: deduplikacja powtarzających się błędów, backoff uwierzytelniania, ochrona przed usunięciem przy pustej liście",
+        "uk": "Обробка помилок: дедуплікація повторюваних помилок, відкат автентифікації, захист від видалення при порожньому списку",
+        "zh-cn": "错误处理：重复错误去重、认证退避、防止空系统列表删除"
+      },
       "0.2.0": {
         "en": "Use adapter timer methods, synchronous onUnload, merge About into Connection tab, add Windows/macOS CI, full MIT license in README",
         "de": "Adapter-Timer-Methoden, synchrones onUnload, About-Tab in Verbindung integriert, Windows/macOS CI, vollständiger MIT-Lizenztext in README",
@@ -80,19 +93,6 @@
         "pl": "Poprawiono wszystkie błędy repochecker; repozytorium zmieniono na ioBroker.beszel",
         "uk": "Виправлено всі помилки репочекера; репозиторій перейменовано на ioBroker.beszel",
         "zh-cn": "修复所有 repochecker 问题；仓库重命名为 ioBroker.beszel"
-      },
-      "0.1.3": {
-        "en": "Fix all JSDoc warnings; update dependencies",
-        "de": "Alle JSDoc-Warnungen behoben; Abhängigkeiten aktualisiert",
-        "ru": "Исправлены все предупреждения JSDoc; обновлены зависимости",
-        "pt": "Corrigidos todos os avisos JSDoc; dependências atualizadas",
-        "nl": "Alle JSDoc-waarschuwingen opgelost; afhankelijkheden bijgewerkt",
-        "fr": "Correction de tous les avertissements JSDoc; dépendances mises à jour",
-        "it": "Corretti tutti gli avvisi JSDoc; dipendenze aggiornate",
-        "es": "Corregidas todas las advertencias JSDoc; dependencias actualizadas",
-        "pl": "Poprawiono wszystkie ostrzeżenia JSDoc; zaktualizowano zależności",
-        "uk": "Виправлено всі попередження JSDoc; оновлено залежності",
-        "zh-cn": "修复所有 JSDoc 警告；更新依赖项"
       }
     },
     "titleLang": {

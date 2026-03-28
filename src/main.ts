@@ -9,6 +9,8 @@ class BeszelAdapter extends utils.Adapter {
   private pollTimer: ioBroker.Interval | undefined = undefined;
   private isPolling = false;
   private lastSystemCount = 0;
+  private lastErrorCode = "";
+  private authFailCount = 0;
 
   public constructor(options: Partial<utils.AdapterOptions> = {}) {
     super({
@@ -128,6 +130,34 @@ class BeszelAdapter extends utils.Adapter {
     }
   }
 
+  /**
+   * Classify an error for deduplication and log-level decisions.
+   *
+   * @param err The error to classify
+   */
+  private classifyError(err: unknown): string {
+    if (!(err instanceof Error)) {
+      return "UNKNOWN";
+    }
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === "UNAUTHORIZED") {
+      return "UNAUTHORIZED";
+    }
+    if (
+      code === "ENOTFOUND" ||
+      code === "ECONNREFUSED" ||
+      code === "ECONNRESET" ||
+      code === "ENETUNREACH" ||
+      code === "EAI_AGAIN"
+    ) {
+      return "NETWORK";
+    }
+    if (code === "ETIMEDOUT" || err.message.includes("timed out")) {
+      return "TIMEOUT";
+    }
+    return code || "UNKNOWN";
+  }
+
   private async poll(): Promise<void> {
     if (this.isPolling) {
       this.log.debug("Skipping poll — previous poll still running");
@@ -161,21 +191,47 @@ class BeszelAdapter extends utils.Adapter {
         await this.stateManager.updateSystem(system, stats, containers, config);
       }
 
-      // Cleanup stale systems
-      await this.stateManager.cleanupSystems(systems.map((s) => s.name));
+      // Cleanup stale systems — but only if we actually got results.
+      // An empty list during a transient API issue must NOT wipe all devices.
+      if (systems.length > 0 || this.lastSystemCount === 0) {
+        await this.stateManager.cleanupSystems(systems.map((s) => s.name));
+      }
 
       this.lastSystemCount = systems.length;
+      this.authFailCount = 0;
+
+      // Clear error state on success
+      if (this.lastErrorCode) {
+        this.log.info("Connection restored");
+        this.lastErrorCode = "";
+      }
       this.log.debug(`Polled ${systems.length} systems successfully`);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      this.log.error(`Poll failed: ${errMsg}`);
+      const errorCode = this.classifyError(err);
+      const isRepeat = errorCode === this.lastErrorCode;
+      this.lastErrorCode = errorCode;
 
-      // On 401, invalidate token so next poll re-authenticates
-      if (
-        err instanceof Error &&
-        (err as NodeJS.ErrnoException).code === "UNAUTHORIZED"
-      ) {
+      if (errorCode === "UNAUTHORIZED") {
         this.client?.invalidateToken();
+        this.authFailCount++;
+        if (this.authFailCount <= 3) {
+          this.log.error(
+            "Authentication failed — check username and password",
+          );
+        } else if (this.authFailCount === 4) {
+          this.log.error(
+            "Authentication keeps failing — suppressing further auth errors",
+          );
+        } else {
+          this.log.debug(`Auth still failing (attempt ${this.authFailCount})`);
+        }
+      } else if (isRepeat) {
+        this.log.debug(`Poll failed (ongoing): ${errMsg}`);
+      } else if (errorCode === "NETWORK") {
+        this.log.warn("Cannot reach Beszel Hub — will keep retrying");
+      } else {
+        this.log.error(`Poll failed: ${errMsg}`);
       }
 
       await this.setStateAsync("info.connection", { val: false, ack: true });
