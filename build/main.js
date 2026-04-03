@@ -1,246 +1,223 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-const utils = __importStar(require("@iobroker/adapter-core"));
-const beszel_client_js_1 = require("./lib/beszel-client.js");
-const state_manager_js_1 = require("./lib/state-manager.js");
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var utils = __toESM(require("@iobroker/adapter-core"));
+var import_beszel_client = require("./lib/beszel-client.js");
+var import_state_manager = require("./lib/state-manager.js");
 class BeszelAdapter extends utils.Adapter {
-    client = null;
-    stateManager = null;
-    pollTimer = undefined;
-    isPolling = false;
-    lastSystemCount = 0;
-    lastErrorCode = "";
-    authFailCount = 0;
-    constructor(options = {}) {
-        super({
-            ...options,
-            name: "beszel",
-        });
-        this.on("ready", this.onReady.bind(this));
-        this.on("unload", this.onUnload.bind(this));
-        this.on("message", this.onMessage.bind(this));
+  client = null;
+  stateManager = null;
+  pollTimer = void 0;
+  isPolling = false;
+  lastSystemCount = 0;
+  lastErrorCode = "";
+  authFailCount = 0;
+  constructor(options = {}) {
+    super({
+      ...options,
+      name: "beszel"
+    });
+    this.on("ready", this.onReady.bind(this));
+    this.on("unload", this.onUnload.bind(this));
+    this.on("message", this.onMessage.bind(this));
+  }
+  async onReady() {
+    var _a, _b;
+    const config = this.config;
+    await this.setObjectNotExistsAsync("info", {
+      type: "channel",
+      common: { name: "Information" },
+      native: {}
+    });
+    await this.setObjectNotExistsAsync("info.connection", {
+      type: "state",
+      common: {
+        name: "Connection status",
+        type: "boolean",
+        role: "indicator.connected",
+        read: true,
+        write: false,
+        def: false
+      },
+      native: {}
+    });
+    await this.setStateAsync("info.connection", { val: false, ack: true });
+    if (!config.url || !config.username || !config.password) {
+      this.log.error(
+        "Beszel adapter: URL, username, and password are required. Please configure the adapter."
+      );
+      return;
     }
-    async onReady() {
-        const config = this.config;
-        // Ensure info objects exist before any setState calls
-        await this.setObjectNotExistsAsync("info", {
-            type: "channel",
-            common: { name: "Information" },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync("info.connection", {
-            type: "state",
-            common: {
-                name: "Connection status",
-                type: "boolean",
-                role: "indicator.connected",
-                read: true,
-                write: false,
-                def: false,
-            },
-            native: {},
-        });
-        await this.setStateAsync("info.connection", { val: false, ack: true });
-        // Validate required config
-        if (!config.url || !config.username || !config.password) {
-            this.log.error("Beszel adapter: URL, username, and password are required. Please configure the adapter.");
-            return;
+    this.client = new import_beszel_client.BeszelClient(
+      config.url,
+      config.username,
+      config.password
+    );
+    this.stateManager = new import_state_manager.StateManager(this);
+    const existingObjects = await this.getObjectViewAsync("system", "device", {
+      startkey: `${this.namespace}.systems.`,
+      endkey: `${this.namespace}.systems.\u9999`
+    });
+    if (existingObjects == null ? void 0 : existingObjects.rows) {
+      for (const row of existingObjects.rows) {
+        const relId = row.id.startsWith(`${this.namespace}.`) ? row.id.slice(this.namespace.length + 1) : row.id;
+        const parts = relId.split(".");
+        if (parts.length === 2 && parts[0] === "systems") {
+          await this.stateManager.cleanupMetrics(parts[1], config);
         }
-        this.client = new beszel_client_js_1.BeszelClient(config.url, config.username, config.password);
-        this.stateManager = new state_manager_js_1.StateManager(this);
-        // Cleanup disabled metric states for existing systems (config may have changed)
-        const existingObjects = await this.getObjectViewAsync("system", "device", {
-            startkey: `${this.namespace}.systems.`,
-            endkey: `${this.namespace}.systems.\u9999`,
-        });
-        if (existingObjects?.rows) {
-            for (const row of existingObjects.rows) {
-                const relId = row.id.startsWith(`${this.namespace}.`)
-                    ? row.id.slice(this.namespace.length + 1)
-                    : row.id;
-                const parts = relId.split(".");
-                if (parts.length === 2 && parts[0] === "systems") {
-                    await this.stateManager.cleanupMetrics(parts[1], config);
-                }
-            }
-        }
-        // Initial poll
-        await this.poll();
-        // Set up recurring poll
-        const intervalMs = Math.max(10, config.pollInterval ?? 60) * 1000;
-        this.pollTimer = this.setInterval(() => {
-            void this.poll();
-        }, intervalMs);
-        this.log.info(`Beszel adapter started — ${this.lastSystemCount} system(s), polling every ${config.pollInterval ?? 60}s`);
+      }
     }
-    onUnload(callback) {
-        try {
-            if (this.pollTimer) {
-                this.clearInterval(this.pollTimer);
-                this.pollTimer = undefined;
-            }
-            void this.setState("info.connection", { val: false, ack: true });
-        }
-        catch {
-            // ignore
-        }
-        callback();
+    await this.poll();
+    const intervalMs = Math.max(10, (_a = config.pollInterval) != null ? _a : 60) * 1e3;
+    this.pollTimer = this.setInterval(() => {
+      void this.poll();
+    }, intervalMs);
+    this.log.info(
+      `Beszel adapter started \u2014 ${this.lastSystemCount} system(s), polling every ${(_b = config.pollInterval) != null ? _b : 60}s`
+    );
+  }
+  onUnload(callback) {
+    try {
+      if (this.pollTimer) {
+        this.clearInterval(this.pollTimer);
+        this.pollTimer = void 0;
+      }
+      void this.setState("info.connection", { val: false, ack: true });
+    } catch {
     }
-    async onMessage(obj) {
-        if (obj.command === "checkConnection") {
-            const config = obj.message;
-            const url = config.url ?? "";
-            const username = config.username ?? "";
-            const password = config.password ?? "";
-            if (!url || !username || !password) {
-                this.sendTo(obj.from, obj.command, {
-                    success: false,
-                    message: "URL, username and password are required",
-                }, obj.callback);
-                return;
-            }
-            const testClient = new beszel_client_js_1.BeszelClient(url, username, password);
-            const result = await testClient.checkConnection();
-            this.sendTo(obj.from, obj.command, result, obj.callback);
-        }
+    callback();
+  }
+  async onMessage(obj) {
+    var _a, _b, _c;
+    if (obj.command === "checkConnection") {
+      const config = obj.message;
+      const url = (_a = config.url) != null ? _a : "";
+      const username = (_b = config.username) != null ? _b : "";
+      const password = (_c = config.password) != null ? _c : "";
+      if (!url || !username || !password) {
+        this.sendTo(
+          obj.from,
+          obj.command,
+          {
+            success: false,
+            message: "URL, username and password are required"
+          },
+          obj.callback
+        );
+        return;
+      }
+      const testClient = new import_beszel_client.BeszelClient(url, username, password);
+      const result = await testClient.checkConnection();
+      this.sendTo(obj.from, obj.command, result, obj.callback);
     }
-    /**
-     * Classify an error for deduplication and log-level decisions.
-     *
-     * @param err The error to classify
-     */
-    classifyError(err) {
-        if (!(err instanceof Error)) {
-            return "UNKNOWN";
-        }
-        const code = err.code;
-        if (code === "UNAUTHORIZED") {
-            return "UNAUTHORIZED";
-        }
-        if (code === "ENOTFOUND" ||
-            code === "ECONNREFUSED" ||
-            code === "ECONNRESET" ||
-            code === "ENETUNREACH" ||
-            code === "EAI_AGAIN") {
-            return "NETWORK";
-        }
-        if (code === "ETIMEDOUT" || err.message.includes("timed out")) {
-            return "TIMEOUT";
-        }
-        return code || "UNKNOWN";
+  }
+  /**
+   * Classify an error for deduplication and log-level decisions.
+   *
+   * @param err The error to classify
+   */
+  classifyError(err) {
+    if (!(err instanceof Error)) {
+      return "UNKNOWN";
     }
-    async poll() {
-        if (this.isPolling) {
-            this.log.debug("Skipping poll — previous poll still running");
-            return;
-        }
-        if (!this.client || !this.stateManager) {
-            return;
-        }
-        this.isPolling = true;
-        try {
-            const config = this.config;
-            // Fetch all data
-            const [systems, containers] = await Promise.all([
-                this.client.getSystems(),
-                config.metrics_containers
-                    ? this.client.getContainers()
-                    : Promise.resolve([]),
-            ]);
-            const systemIds = systems.map((s) => s.id);
-            const statsMap = await this.client.getLatestStats(systemIds);
-            // Update connection state
-            await this.setStateAsync("info.connection", { val: true, ack: true });
-            // Update each system
-            for (const system of systems) {
-                const stats = statsMap.get(system.id);
-                await this.stateManager.updateSystem(system, stats, containers, config);
-            }
-            // Cleanup stale systems — but only if we actually got results.
-            // An empty list during a transient API issue must NOT wipe all devices.
-            if (systems.length > 0 || this.lastSystemCount === 0) {
-                await this.stateManager.cleanupSystems(systems.map((s) => s.name));
-            }
-            this.lastSystemCount = systems.length;
-            this.authFailCount = 0;
-            // Clear error state on success
-            if (this.lastErrorCode) {
-                this.log.info("Connection restored");
-                this.lastErrorCode = "";
-            }
-            this.log.debug(`Polled ${systems.length} systems successfully`);
-        }
-        catch (err) {
-            const errMsg = err instanceof Error ? err.message : String(err);
-            const errorCode = this.classifyError(err);
-            const isRepeat = errorCode === this.lastErrorCode;
-            this.lastErrorCode = errorCode;
-            if (errorCode === "UNAUTHORIZED") {
-                this.client?.invalidateToken();
-                this.authFailCount++;
-                if (this.authFailCount <= 3) {
-                    this.log.error("Authentication failed — check username and password");
-                }
-                else if (this.authFailCount === 4) {
-                    this.log.error("Authentication keeps failing — suppressing further auth errors");
-                }
-                else {
-                    this.log.debug(`Auth still failing (attempt ${this.authFailCount})`);
-                }
-            }
-            else if (isRepeat) {
-                this.log.debug(`Poll failed (ongoing): ${errMsg}`);
-            }
-            else if (errorCode === "NETWORK") {
-                this.log.warn("Cannot reach Beszel Hub — will keep retrying");
-            }
-            else {
-                this.log.error(`Poll failed: ${errMsg}`);
-            }
-            await this.setStateAsync("info.connection", { val: false, ack: true });
-        }
-        finally {
-            this.isPolling = false;
-        }
+    const code = err.code;
+    if (code === "UNAUTHORIZED") {
+      return "UNAUTHORIZED";
     }
+    if (code === "ENOTFOUND" || code === "ECONNREFUSED" || code === "ECONNRESET" || code === "ENETUNREACH" || code === "EAI_AGAIN") {
+      return "NETWORK";
+    }
+    if (code === "ETIMEDOUT" || err.message.includes("timed out")) {
+      return "TIMEOUT";
+    }
+    return code || "UNKNOWN";
+  }
+  async poll() {
+    var _a;
+    if (this.isPolling) {
+      this.log.debug("Skipping poll \u2014 previous poll still running");
+      return;
+    }
+    if (!this.client || !this.stateManager) {
+      return;
+    }
+    this.isPolling = true;
+    try {
+      const config = this.config;
+      const [systems, containers] = await Promise.all([
+        this.client.getSystems(),
+        config.metrics_containers ? this.client.getContainers() : Promise.resolve([])
+      ]);
+      const systemIds = systems.map((s) => s.id);
+      const statsMap = await this.client.getLatestStats(systemIds);
+      await this.setStateAsync("info.connection", { val: true, ack: true });
+      for (const system of systems) {
+        const stats = statsMap.get(system.id);
+        await this.stateManager.updateSystem(system, stats, containers, config);
+      }
+      if (systems.length > 0 || this.lastSystemCount === 0) {
+        await this.stateManager.cleanupSystems(systems.map((s) => s.name));
+      }
+      this.lastSystemCount = systems.length;
+      this.authFailCount = 0;
+      if (this.lastErrorCode) {
+        this.log.info("Connection restored");
+        this.lastErrorCode = "";
+      }
+      this.log.debug(`Polled ${systems.length} systems successfully`);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errorCode = this.classifyError(err);
+      const isRepeat = errorCode === this.lastErrorCode;
+      this.lastErrorCode = errorCode;
+      if (errorCode === "UNAUTHORIZED") {
+        (_a = this.client) == null ? void 0 : _a.invalidateToken();
+        this.authFailCount++;
+        if (this.authFailCount <= 3) {
+          this.log.error("Authentication failed \u2014 check username and password");
+        } else if (this.authFailCount === 4) {
+          this.log.error(
+            "Authentication keeps failing \u2014 suppressing further auth errors"
+          );
+        } else {
+          this.log.debug(`Auth still failing (attempt ${this.authFailCount})`);
+        }
+      } else if (isRepeat) {
+        this.log.debug(`Poll failed (ongoing): ${errMsg}`);
+      } else if (errorCode === "NETWORK") {
+        this.log.warn("Cannot reach Beszel Hub \u2014 will keep retrying");
+      } else {
+        this.log.error(`Poll failed: ${errMsg}`);
+      }
+      await this.setStateAsync("info.connection", { val: false, ack: true });
+    } finally {
+      this.isPolling = false;
+    }
+  }
 }
 if (require.main !== module) {
-    // Export the constructor in compact mode
-    module.exports = (options) => new BeszelAdapter(options);
+  module.exports = (options) => new BeszelAdapter(options);
+} else {
+  (() => new BeszelAdapter())();
 }
-else {
-    (() => new BeszelAdapter())();
-}
+//# sourceMappingURL=main.js.map
