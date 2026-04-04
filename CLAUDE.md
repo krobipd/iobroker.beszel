@@ -79,6 +79,17 @@ All boolean metric flags default to `false` except:
 5. Temperature: compute average of top 3 hottest sensors for `temperature` state
 6. Name sanitization: lowercase, non-alphanumeric → `_`, max 50 chars, trim underscores
 
+## Test Coverage
+
+```
+test/
+├── testBeszelClient.ts  → API client (auth, token, errors, response parsing) (36 Tests)
+├── testStateManager.ts  → StateManager (sanitize, system, stats, GPU, filesystem, containers, cleanup) (90 Tests)
+└── testPackageFiles.ts  → @iobroker/testing Package-Validierung (57 Tests)
+
+Total: 183 Tests (alle TypeScript)
+```
+
 ## Build Commands
 
 ```bash
