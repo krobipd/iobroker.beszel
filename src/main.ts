@@ -48,7 +48,7 @@ class BeszelAdapter extends utils.Adapter {
     // Validate required config
     if (!config.url || !config.username || !config.password) {
       this.log.error(
-        "Beszel adapter: URL, username, and password are required. Please configure the adapter.",
+        "URL, username, and password are required — please configure the adapter settings",
       );
       return;
     }

@@ -64,7 +64,7 @@ class BeszelAdapter extends utils.Adapter {
     await this.setStateAsync("info.connection", { val: false, ack: true });
     if (!config.url || !config.username || !config.password) {
       this.log.error(
-        "Beszel adapter: URL, username, and password are required. Please configure the adapter."
+        "URL, username, and password are required \u2014 please configure the adapter settings"
       );
       return;
     }
