@@ -30,7 +30,7 @@ class StateManager {
     this.adapter = adapter;
   }
   /**
-   * Sanitize a name to a valid ioBroker state ID segment.
+   * Sanitize a name to a valid ioBroker state ID segment (see adapter.FORBIDDEN_CHARS).
    * Lowercase, replace non-alphanumeric with _, max 50 chars, trim underscores.
    *
    * @param name Raw name to sanitize

@@ -122,6 +122,9 @@ beszel.0.
 
 ## Changelog
 
+### 0.2.5 (2026-04-08)
+- Restore standard GitHub-based tests, remove CHANGELOG.md, add FORBIDDEN_CHARS reference, fix Dependabot cooldown
+
 ### 0.2.4 (2026-04-05)
 - Cleaner log messages, remove redundant adapter name prefix
 
@@ -134,16 +137,7 @@ beszel.0.
 ### 0.2.1 (2026-03-28)
 - Error deduplication, auth backoff, protect against empty system list deletion
 
-### 0.2.0 (2026-03-28)
-- Adapter timer methods, synchronous onUnload, merge About tab, Windows/macOS CI, full MIT license
-
-### 0.1.9 (2026-03-19)
-- Logging cleanup: stale system removal moved to debug level
-
-### 0.1.8 (2026-03-19)
-- Add online/offline indicator to system device folders
-
-Older changelog: [CHANGELOG.md](CHANGELOG.md)
+Older changelog: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
 
 ---
 

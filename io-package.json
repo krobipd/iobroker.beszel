@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "news": {
+      "0.2.5": {
+        "en": "Restore standard GitHub-based tests, remove CHANGELOG.md, add FORBIDDEN_CHARS reference, fix Dependabot cooldown",
+        "de": "Standard GitHub-Tests wiederhergestellt, CHANGELOG.md entfernt, FORBIDDEN_CHARS-Referenz, Dependabot-Cooldown",
+        "ru": "Восстановлены стандартные тесты GitHub, удалён CHANGELOG.md, добавлена ссылка FORBIDDEN_CHARS, cooldown Dependabot",
+        "pt": "Restaurados testes padrão GitHub, removido CHANGELOG.md, referência FORBIDDEN_CHARS, cooldown Dependabot",
+        "nl": "Standaard GitHub-tests hersteld, CHANGELOG.md verwijderd, FORBIDDEN_CHARS-referentie, Dependabot-cooldown",
+        "fr": "Tests GitHub standard restaurés, CHANGELOG.md supprimé, référence FORBIDDEN_CHARS, cooldown Dependabot",
+        "it": "Ripristinati test GitHub standard, rimosso CHANGELOG.md, riferimento FORBIDDEN_CHARS, cooldown Dependabot",
+        "es": "Restauradas pruebas estándar GitHub, eliminado CHANGELOG.md, referencia FORBIDDEN_CHARS, cooldown Dependabot",
+        "pl": "Przywrócono standardowe testy GitHub, usunięto CHANGELOG.md, referencja FORBIDDEN_CHARS, cooldown Dependabot",
+        "uk": "Відновлено стандартні тести GitHub, видалено CHANGELOG.md, посилання FORBIDDEN_CHARS, cooldown Dependabot",
+        "zh-cn": "恢复标准GitHub测试，删除CHANGELOG.md，添加FORBIDDEN_CHARS引用，修复Dependabot冷却"
+      },
       "0.2.4": {
         "en": "Cleaner log messages, remove redundant adapter name prefix",
         "de": "Sauberere Log-Meldungen, redundanten Adapter-Namen-Präfix entfernt",
@@ -80,19 +93,6 @@
         "pl": "Czyszczenie logowania: usuwanie przestarzałych systemów przeniesione na poziom debug",
         "uk": "Очищення логування: видалення застарілих систем переміщено на рівень debug",
         "zh-cn": "日志清理：将过期系统的删除移至debug级别"
-      },
-      "0.1.8": {
-        "en": "Add online/offline indicator to system device folders",
-        "de": "Online/Offline-Anzeige zu System-Geräteordnern hinzugefügt",
-        "ru": "Добавлен индикатор онлайн/офлайн в папки системных устройств",
-        "pt": "Adicionar indicador online/offline às pastas de dispositivos do sistema",
-        "nl": "Online/offline-indicator toegevoegd aan systeemapparaapmappen",
-        "fr": "Ajout d'un indicateur en ligne/hors ligne aux dossiers d'appareils système",
-        "it": "Aggiunto indicatore online/offline alle cartelle dei dispositivi di sistema",
-        "es": "Agregar indicador en línea/fuera de línea a las carpetas de dispositivos del sistema",
-        "pl": "Dodano wskaźnik online/offline do folderów urządzeń systemowych",
-        "uk": "Додано індикатор онлайн/офлайн до папок системних пристроїв",
-        "zh-cn": "为系统设备文件夹添加在线/离线指示器"
       }
     },
     "titleLang": {
