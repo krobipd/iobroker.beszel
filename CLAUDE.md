@@ -6,7 +6,7 @@
 
 **ioBroker Beszel Monitor** — Verbindet sich mit Beszel Hub (PocketBase) für Server-Monitoring.
 
-- **Version:** 0.2.4 (April 2026)
+- **Version:** 0.2.5 (April 2026)
 - **GitHub:** https://github.com/krobipd/ioBroker.beszel
 - **npm:** https://www.npmjs.com/package/iobroker.beszel
 - **Repository PR:** ioBroker/ioBroker.repositories#5645
@@ -40,9 +40,10 @@ src/lib/types.ts         → TypeScript Interfaces (API + Config)
 ## Tests (183)
 
 ```
-test/testBeszelClient.ts  → API Client (Auth, Token, Errors, Responses) (36 Tests)
-test/testStateManager.ts  → StateManager (Sanitize, System, Stats, GPU, FS, Containers, Cleanup) (90 Tests)
-test/testPackageFiles.ts  → @iobroker/testing (57 Tests)
+test/testBeszelClient.ts  → API Client (Auth, Token, Errors, Responses) (27 Tests)
+test/testStateManager.ts  → StateManager (Sanitize, System, Stats, GPU, FS, Containers, Cleanup) (99 Tests)
+test/package.js           → @iobroker/testing Package-Tests (57 Tests)
+test/integration.js       → @iobroker/testing Integration-Tests (plain JS)
 ```
 
 Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Callback-API).
@@ -51,6 +52,7 @@ Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Call
 
 | Version | Highlights |
 |---------|------------|
+| 0.2.5 | Review-Fixes: Standard-Tests (plain JS), CHANGELOG.md entfernt, FORBIDDEN_CHARS-Ref, Dependabot-Cooldown |
 | 0.2.4 | Cleaner Log-Messages, redundanter Adapter-Name-Prefix entfernt |
 | 0.2.3 | Redundante Scripts/DevDeps entfernt, Doku komprimiert |
 | 0.2.2 | Dev-Tooling modernisiert (esbuild, TS 5.9 Pin) |
