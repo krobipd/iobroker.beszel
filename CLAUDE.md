@@ -6,10 +6,10 @@
 
 **ioBroker Beszel Monitor** — Verbindet sich mit Beszel Hub (PocketBase) für Server-Monitoring.
 
-- **Version:** 0.2.5 (April 2026)
+- **Version:** 0.2.6 (April 2026)
 - **GitHub:** https://github.com/krobipd/ioBroker.beszel
 - **npm:** https://www.npmjs.com/package/iobroker.beszel
-- **Repository PR:** ioBroker/ioBroker.repositories#5645
+- **Repository PR:** ioBroker/ioBroker.repositories#5787
 - **Runtime-Deps:** nur `@iobroker/adapter-core` (HTTP via Node.js built-in)
 
 ## Architektur
@@ -23,7 +23,7 @@ src/lib/types.ts         → TypeScript Interfaces (API + Config)
 
 ## Design-Entscheidungen
 
-1. **Keine Runtime-Deps** außer adapter-core — HTTP via Node.js built-in http/https
+1. **Keine Runtime-Deps** außer adapter-core — HTTP via Node.js built-in node:http/node:https
 2. **Token in Memory** — nie in ioBroker States gespeichert, Refresh nach 23h
 3. **Error-Dedup** — `classifyError` + `lastErrorCode`, wiederkehrende Fehler nur debug
 4. **Auth-Backoff** — nach 3 fehlgeschlagenen Versuchen weitere Auth-Fehler unterdrückt
@@ -52,7 +52,8 @@ Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Call
 
 | Version | Highlights |
 |---------|------------|
-| 0.2.5 | Review-Fixes: Standard-Tests (plain JS), CHANGELOG.md entfernt, FORBIDDEN_CHARS-Ref, Dependabot-Cooldown |
+| 0.2.6 | node: Prefix für built-in Module (S5043) |
+| 0.2.5 | Review-Fixes: Standard-Tests (plain JS), CHANGELOG.md entfernt, FORBIDDEN_CHARS-Ref |
 | 0.2.4 | Cleaner Log-Messages, redundanter Adapter-Name-Prefix entfernt |
 | 0.2.3 | Redundante Scripts/DevDeps entfernt, Doku komprimiert |
 | 0.2.2 | Dev-Tooling modernisiert (esbuild, TS 5.9 Pin) |
