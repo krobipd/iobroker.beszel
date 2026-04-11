@@ -60,7 +60,7 @@ All metrics are global toggles that apply to **all** systems. Disabled metrics a
 | | Systemd Services (total / failed) | off |
 | **CPU** | CPU Usage (%) | on |
 | | Load Average (1m / 5m / 15m) | on |
-| | CPU Breakdown (User / System / IOWait / Idle) | off |
+| | CPU Breakdown (User / System / IOWait / Steal / Idle) | off |
 | **Memory** | Memory Usage (% and GB) | on |
 | | Memory Details (Buffers, ZFS ARC) | off |
 | | Swap | off |
@@ -88,9 +88,17 @@ beszel.0.
         ├── uptime           — Uptime in seconds
         ├── uptime_text      — Human-readable uptime (e.g. "14d 6h")
         ├── cpu_usage        — CPU %
+        ├── load_avg_1m      — Load average 1 min
+        ├── load_avg_5m      — Load average 5 min
+        ├── load_avg_15m     — Load average 15 min
         ├── memory_percent   — RAM %
         ├── memory_used      — RAM used (GB)
+        ├── memory_total     — RAM total (GB)
         ├── disk_percent     — Disk %
+        ├── disk_used        — Disk used (GB)
+        ├── disk_total       — Disk total (GB)
+        ├── disk_read        — Disk read (MB/s)
+        ├── disk_write       — Disk write (MB/s)
         ├── network_sent     — Upload (MB/s)
         ├── network_recv     — Download (MB/s)
         ├── temperature      — Avg temperature (°C)
@@ -122,6 +130,9 @@ beszel.0.
 
 ## Changelog
 
+### 0.2.7 (2026-04-12)
+- Fix README state tree (add 8 missing default-on states), add `no-floating-promises` lint rule, remove redundant CI checkout
+
 ### 0.2.6 (2026-04-08)
 - Use `node:` prefix for built-in modules (http, https, url)
 
@@ -137,7 +148,10 @@ beszel.0.
 ### 0.2.2 (2026-04-03)
 - Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)
 
-Older changelog: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
+### 0.2.1 (2026-03-28)
+- Error deduplication, auth backoff after 3 failures, empty-systems guard
+
+Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
 ---
 

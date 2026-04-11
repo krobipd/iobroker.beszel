@@ -1,6 +1,6 @@
 {
   "name": "iobroker.beszel",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "ioBroker adapter for Beszel server monitoring",
   "author": {
     "name": "krobi",
@@ -54,7 +54,7 @@
     "build:test": "tsc -p tsconfig.test.json",
     "watch": "build-adapter ts --watch",
     "check": "tsc --noEmit",
-    "test:ts": "npm run build:test && mocha --exit \"build/test/testBeszelClient.js\" \"build/test/testStateManager.js\"",
+    "test:ts": "npm run build:test && mocha --exit \"build/test/test*.js\"",
     "test:package": "mocha test/package --exit",
     "test:integration": "mocha test/integration --exit",
     "test": "npm run build && npm run test:ts && npm run test:package",
