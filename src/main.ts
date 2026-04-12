@@ -60,6 +60,9 @@ class BeszelAdapter extends utils.Adapter {
     );
     this.stateManager = new StateManager(this);
 
+    // Migrate legacy flat state paths from pre-0.3.0
+    await this.stateManager.migrateLegacyStates();
+
     // Cleanup disabled metric states for existing systems (config may have changed)
     const existingObjects = await this.getObjectViewAsync("system", "device", {
       startkey: `${this.namespace}.systems.`,

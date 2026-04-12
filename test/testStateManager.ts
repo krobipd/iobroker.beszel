@@ -293,7 +293,7 @@ describe("StateManager", () => {
 
         it("should create online state as true when status is up", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
-            const state = adapter.states.get("systems.my_server.online");
+            const state = adapter.states.get("systems.my_server.info.online");
             expect(state?.val).to.be.true;
             expect(state?.ack).to.be.true;
         });
@@ -301,19 +301,19 @@ describe("StateManager", () => {
         it("should create online state as false when status is down", async () => {
             const downSystem = { ...testSystem, status: "down" as const };
             await manager.updateSystem(downSystem, undefined, [], allMetricsConfig());
-            const state = adapter.states.get("systems.my_server.online");
+            const state = adapter.states.get("systems.my_server.info.online");
             expect(state?.val).to.be.false;
         });
 
         it("should set online false for paused status", async () => {
             const paused = { ...testSystem, status: "paused" as const };
             await manager.updateSystem(paused, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.online")?.val).to.be.false;
+            expect(adapter.states.get("systems.my_server.info.online")?.val).to.be.false;
         });
 
         it("should create status state", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
-            const state = adapter.states.get("systems.my_server.status");
+            const state = adapter.states.get("systems.my_server.info.status");
             expect(state?.val).to.equal("up");
         });
     });
@@ -325,50 +325,50 @@ describe("StateManager", () => {
     describe("updateSystem — uptime", () => {
         it("should create uptime states when metrics_uptime is enabled", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
-            const uptime = adapter.states.get("systems.my_server.uptime");
+            const uptime = adapter.states.get("systems.my_server.info.uptime");
             expect(uptime?.val).to.equal(86400);
 
-            const uptimeText = adapter.states.get("systems.my_server.uptime_text");
+            const uptimeText = adapter.states.get("systems.my_server.info.uptime_text");
             expect(uptimeText?.val).to.equal("1d");
         });
 
         it("should NOT create uptime states when metrics_uptime is disabled", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig({ metrics_uptime: false }));
-            expect(adapter.states.has("systems.my_server.uptime")).to.be.false;
-            expect(adapter.states.has("systems.my_server.uptime_text")).to.be.false;
+            expect(adapter.states.has("systems.my_server.info.uptime")).to.be.false;
+            expect(adapter.states.has("systems.my_server.info.uptime_text")).to.be.false;
         });
 
         it("should handle missing uptime info gracefully", async () => {
             const sys = { ...testSystem, info: {} };
             await manager.updateSystem(sys, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.uptime")?.val).to.be.null;
-            expect(adapter.states.get("systems.my_server.uptime_text")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.info.uptime")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.info.uptime_text")?.val).to.be.null;
         });
 
         it("should format uptime with days, hours and minutes", async () => {
             // 2d 3h 45m = 2*86400 + 3*3600 + 45*60 = 186300
             const sys = { ...testSystem, info: { u: 186300 } };
             await manager.updateSystem(sys, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.uptime_text")?.val).to.equal("2d 3h 45m");
+            expect(adapter.states.get("systems.my_server.info.uptime_text")?.val).to.equal("2d 3h 45m");
         });
 
         it("should format short uptime correctly", async () => {
             const sys = { ...testSystem, info: { u: 300 } };
             await manager.updateSystem(sys, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.uptime_text")?.val).to.equal("5m");
+            expect(adapter.states.get("systems.my_server.info.uptime_text")?.val).to.equal("5m");
         });
 
         it("should format zero uptime as 0m", async () => {
             const sys = { ...testSystem, info: { u: 0 } };
             await manager.updateSystem(sys, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.uptime_text")?.val).to.equal("0m");
+            expect(adapter.states.get("systems.my_server.info.uptime_text")?.val).to.equal("0m");
         });
 
         it("should format uptime with only hours", async () => {
             // 2h = 7200s
             const sys = { ...testSystem, info: { u: 7200 } };
             await manager.updateSystem(sys, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.uptime_text")?.val).to.equal("2h");
+            expect(adapter.states.get("systems.my_server.info.uptime_text")?.val).to.equal("2h");
         });
     });
 
@@ -379,18 +379,18 @@ describe("StateManager", () => {
     describe("updateSystem — agent version", () => {
         it("should create agent_version state when enabled", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.agent_version")?.val).to.equal("0.8.0");
+            expect(adapter.states.get("systems.my_server.info.agent_version")?.val).to.equal("0.8.0");
         });
 
         it("should NOT create agent_version state when disabled", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig({ metrics_agentVersion: false }));
-            expect(adapter.states.has("systems.my_server.agent_version")).to.be.false;
+            expect(adapter.states.has("systems.my_server.info.agent_version")).to.be.false;
         });
 
         it("should handle missing agent version", async () => {
             const sys = { ...testSystem, info: {} };
             await manager.updateSystem(sys, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.agent_version")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.info.agent_version")?.val).to.be.null;
         });
     });
 
@@ -401,21 +401,21 @@ describe("StateManager", () => {
     describe("updateSystem — systemd services", () => {
         it("should create service states when enabled", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.services_total")?.val).to.equal(10);
-            expect(adapter.states.get("systems.my_server.services_failed")?.val).to.equal(1);
+            expect(adapter.states.get("systems.my_server.info.services_total")?.val).to.equal(10);
+            expect(adapter.states.get("systems.my_server.info.services_failed")?.val).to.equal(1);
         });
 
         it("should NOT create service states when disabled", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig({ metrics_services: false }));
-            expect(adapter.states.has("systems.my_server.services_total")).to.be.false;
-            expect(adapter.states.has("systems.my_server.services_failed")).to.be.false;
+            expect(adapter.states.has("systems.my_server.info.services_total")).to.be.false;
+            expect(adapter.states.has("systems.my_server.info.services_failed")).to.be.false;
         });
 
         it("should handle missing services info", async () => {
             const sys = { ...testSystem, info: {} };
             await manager.updateSystem(sys, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.services_total")?.val).to.be.null;
-            expect(adapter.states.get("systems.my_server.services_failed")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.info.services_total")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.info.services_failed")?.val).to.be.null;
         });
     });
 
@@ -426,22 +426,22 @@ describe("StateManager", () => {
     describe("updateSystem — CPU stats", () => {
         it("should create cpu_usage when metrics_cpu is enabled and stats available", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.cpu_usage")?.val).to.equal(45.2);
+            expect(adapter.states.get("systems.my_server.cpu.usage")?.val).to.equal(45.2);
         });
 
         it("should NOT create cpu_usage when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_cpu: false }));
-            expect(adapter.states.has("systems.my_server.cpu_usage")).to.be.false;
+            expect(adapter.states.has("systems.my_server.cpu.usage")).to.be.false;
         });
 
         it("should NOT create cpu_usage without stats", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
-            expect(adapter.states.has("systems.my_server.cpu_usage")).to.be.false;
+            expect(adapter.states.has("systems.my_server.cpu.usage")).to.be.false;
         });
 
         it("should set correct role and unit for cpu_usage", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            const obj = adapter.objects.get("systems.my_server.cpu_usage");
+            const obj = adapter.objects.get("systems.my_server.cpu.usage");
             expect(obj?.common.role).to.equal("level");
             expect(obj?.common.unit).to.equal("%");
         });
@@ -454,28 +454,28 @@ describe("StateManager", () => {
     describe("updateSystem — CPU breakdown", () => {
         it("should create all CPU breakdown states", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.cpu_user")?.val).to.equal(30);
-            expect(adapter.states.get("systems.my_server.cpu_system")?.val).to.equal(10);
-            expect(adapter.states.get("systems.my_server.cpu_iowait")?.val).to.equal(5);
-            expect(adapter.states.get("systems.my_server.cpu_steal")?.val).to.equal(2);
-            expect(adapter.states.get("systems.my_server.cpu_idle")?.val).to.equal(53);
+            expect(adapter.states.get("systems.my_server.cpu.user")?.val).to.equal(30);
+            expect(adapter.states.get("systems.my_server.cpu.system")?.val).to.equal(10);
+            expect(adapter.states.get("systems.my_server.cpu.iowait")?.val).to.equal(5);
+            expect(adapter.states.get("systems.my_server.cpu.steal")?.val).to.equal(2);
+            expect(adapter.states.get("systems.my_server.cpu.idle")?.val).to.equal(53);
         });
 
         it("should NOT create CPU breakdown when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_cpuBreakdown: false }));
-            expect(adapter.states.has("systems.my_server.cpu_user")).to.be.false;
+            expect(adapter.states.has("systems.my_server.cpu.user")).to.be.false;
         });
 
         it("should skip CPU breakdown when cpub has fewer than 5 elements", async () => {
             const partialStats = { ...testStats, cpub: [10, 20] };
             await manager.updateSystem(testSystem, partialStats, [], allMetricsConfig());
-            expect(adapter.states.has("systems.my_server.cpu_user")).to.be.false;
+            expect(adapter.states.has("systems.my_server.cpu.user")).to.be.false;
         });
 
         it("should skip CPU breakdown when cpub is undefined", async () => {
             const noBreakdown = { ...testStats, cpub: undefined };
             await manager.updateSystem(testSystem, noBreakdown, [], allMetricsConfig());
-            expect(adapter.states.has("systems.my_server.cpu_user")).to.be.false;
+            expect(adapter.states.has("systems.my_server.cpu.user")).to.be.false;
         });
     });
 
@@ -486,34 +486,34 @@ describe("StateManager", () => {
     describe("updateSystem — load average", () => {
         it("should use stats.la when available", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.load_avg_1m")?.val).to.equal(1.8);
-            expect(adapter.states.get("systems.my_server.load_avg_5m")?.val).to.equal(2.1);
-            expect(adapter.states.get("systems.my_server.load_avg_15m")?.val).to.equal(2.3);
+            expect(adapter.states.get("systems.my_server.cpu.load_1m")?.val).to.equal(1.8);
+            expect(adapter.states.get("systems.my_server.cpu.load_5m")?.val).to.equal(2.1);
+            expect(adapter.states.get("systems.my_server.cpu.load_15m")?.val).to.equal(2.3);
         });
 
         it("should fallback to system.info.la when stats have no la", async () => {
             const statsNoLa = { ...testStats, la: undefined };
             await manager.updateSystem(testSystem, statsNoLa, [], allMetricsConfig());
             // Falls back to system.info.la = [1.5, 2.0, 2.5]
-            expect(adapter.states.get("systems.my_server.load_avg_1m")?.val).to.equal(1.5);
-            expect(adapter.states.get("systems.my_server.load_avg_5m")?.val).to.equal(2.0);
-            expect(adapter.states.get("systems.my_server.load_avg_15m")?.val).to.equal(2.5);
+            expect(adapter.states.get("systems.my_server.cpu.load_1m")?.val).to.equal(1.5);
+            expect(adapter.states.get("systems.my_server.cpu.load_5m")?.val).to.equal(2.0);
+            expect(adapter.states.get("systems.my_server.cpu.load_15m")?.val).to.equal(2.5);
         });
 
         it("should fallback to system.info.la when no stats at all", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.load_avg_1m")?.val).to.equal(1.5);
+            expect(adapter.states.get("systems.my_server.cpu.load_1m")?.val).to.equal(1.5);
         });
 
         it("should set null when no la data at all", async () => {
             const sysNoLa = { ...testSystem, info: {} };
             await manager.updateSystem(sysNoLa, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.load_avg_1m")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.cpu.load_1m")?.val).to.be.null;
         });
 
         it("should NOT create load avg states when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_loadAvg: false }));
-            expect(adapter.states.has("systems.my_server.load_avg_1m")).to.be.false;
+            expect(adapter.states.has("systems.my_server.cpu.load_1m")).to.be.false;
         });
     });
 
@@ -524,14 +524,14 @@ describe("StateManager", () => {
     describe("updateSystem — memory", () => {
         it("should create memory states when enabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.memory_percent")?.val).to.equal(28.1);
-            expect(adapter.states.get("systems.my_server.memory_used")?.val).to.equal(4.5);
-            expect(adapter.states.get("systems.my_server.memory_total")?.val).to.equal(16.0);
+            expect(adapter.states.get("systems.my_server.memory.percent")?.val).to.equal(28.1);
+            expect(adapter.states.get("systems.my_server.memory.used")?.val).to.equal(4.5);
+            expect(adapter.states.get("systems.my_server.memory.total")?.val).to.equal(16.0);
         });
 
         it("should NOT create memory states when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_memory: false }));
-            expect(adapter.states.has("systems.my_server.memory_percent")).to.be.false;
+            expect(adapter.states.has("systems.my_server.memory.percent")).to.be.false;
         });
     });
 
@@ -542,14 +542,14 @@ describe("StateManager", () => {
     describe("updateSystem — memory details", () => {
         it("should create buffers and ZFS ARC states", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.memory_buffers")?.val).to.equal(2.3);
-            expect(adapter.states.get("systems.my_server.memory_zfs_arc")?.val).to.equal(0.5);
+            expect(adapter.states.get("systems.my_server.memory.buffers")?.val).to.equal(2.3);
+            expect(adapter.states.get("systems.my_server.memory.zfs_arc")?.val).to.equal(0.5);
         });
 
         it("should NOT create memory detail states when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_memoryDetails: false }));
-            expect(adapter.states.has("systems.my_server.memory_buffers")).to.be.false;
-            expect(adapter.states.has("systems.my_server.memory_zfs_arc")).to.be.false;
+            expect(adapter.states.has("systems.my_server.memory.buffers")).to.be.false;
+            expect(adapter.states.has("systems.my_server.memory.zfs_arc")).to.be.false;
         });
     });
 
@@ -560,13 +560,13 @@ describe("StateManager", () => {
     describe("updateSystem — swap", () => {
         it("should create swap states when enabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.swap_used")?.val).to.equal(0.1);
-            expect(adapter.states.get("systems.my_server.swap_total")?.val).to.equal(4.0);
+            expect(adapter.states.get("systems.my_server.memory.swap_used")?.val).to.equal(0.1);
+            expect(adapter.states.get("systems.my_server.memory.swap_total")?.val).to.equal(4.0);
         });
 
         it("should NOT create swap states when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_swap: false }));
-            expect(adapter.states.has("systems.my_server.swap_used")).to.be.false;
+            expect(adapter.states.has("systems.my_server.memory.swap_used")).to.be.false;
         });
     });
 
@@ -577,22 +577,22 @@ describe("StateManager", () => {
     describe("updateSystem — disk", () => {
         it("should create disk states when enabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.disk_percent")?.val).to.equal(24);
-            expect(adapter.states.get("systems.my_server.disk_used")?.val).to.equal(120);
-            expect(adapter.states.get("systems.my_server.disk_total")?.val).to.equal(500);
+            expect(adapter.states.get("systems.my_server.disk.percent")?.val).to.equal(24);
+            expect(adapter.states.get("systems.my_server.disk.used")?.val).to.equal(120);
+            expect(adapter.states.get("systems.my_server.disk.total")?.val).to.equal(500);
         });
 
         it("should NOT create disk states when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_disk: false }));
-            expect(adapter.states.has("systems.my_server.disk_percent")).to.be.false;
+            expect(adapter.states.has("systems.my_server.disk.percent")).to.be.false;
         });
 
         it("should handle null disk values", async () => {
             const stats = { ...testStats, dp: undefined, du: undefined, d: undefined };
             await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.disk_percent")?.val).to.be.null;
-            expect(adapter.states.get("systems.my_server.disk_used")?.val).to.be.null;
-            expect(adapter.states.get("systems.my_server.disk_total")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.disk.percent")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.disk.used")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.disk.total")?.val).to.be.null;
         });
     });
 
@@ -603,18 +603,18 @@ describe("StateManager", () => {
     describe("updateSystem — disk speed", () => {
         it("should create disk speed states when enabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.disk_read")?.val).to.equal(50.5);
-            expect(adapter.states.get("systems.my_server.disk_write")?.val).to.equal(20.3);
+            expect(adapter.states.get("systems.my_server.disk.read")?.val).to.equal(50.5);
+            expect(adapter.states.get("systems.my_server.disk.write")?.val).to.equal(20.3);
         });
 
         it("should NOT create disk speed states when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_diskSpeed: false }));
-            expect(adapter.states.has("systems.my_server.disk_read")).to.be.false;
+            expect(adapter.states.has("systems.my_server.disk.read")).to.be.false;
         });
 
         it("should set correct unit for disk speed", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            const obj = adapter.objects.get("systems.my_server.disk_read");
+            const obj = adapter.objects.get("systems.my_server.disk.read");
             expect(obj?.common.unit).to.equal("MB/s");
         });
     });
@@ -626,18 +626,18 @@ describe("StateManager", () => {
     describe("updateSystem — network", () => {
         it("should create network states when enabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.network_sent")?.val).to.equal(1.2);
-            expect(adapter.states.get("systems.my_server.network_recv")?.val).to.equal(3.4);
+            expect(adapter.states.get("systems.my_server.network.sent")?.val).to.equal(1.2);
+            expect(adapter.states.get("systems.my_server.network.recv")?.val).to.equal(3.4);
         });
 
         it("should NOT create network states when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_network: false }));
-            expect(adapter.states.has("systems.my_server.network_sent")).to.be.false;
+            expect(adapter.states.has("systems.my_server.network.sent")).to.be.false;
         });
 
         it("should set correct unit for network", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            const obj = adapter.objects.get("systems.my_server.network_sent");
+            const obj = adapter.objects.get("systems.my_server.network.sent");
             expect(obj?.common.unit).to.equal("MB/s");
         });
     });
@@ -651,56 +651,56 @@ describe("StateManager", () => {
             // Temps: Core 0=65, Core 1=70, Core 2=60, SSD=45
             // Top 3: 70, 65, 60 → avg = 65.0
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.temperature")?.val).to.equal(65);
+            expect(adapter.states.get("systems.my_server.temperature.average")?.val).to.equal(65);
         });
 
         it("should handle single sensor", async () => {
             const stats = { ...testStats, t: { "CPU": 72.5 } };
             await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.temperature")?.val).to.equal(72.5);
+            expect(adapter.states.get("systems.my_server.temperature.average")?.val).to.equal(72.5);
         });
 
         it("should handle two sensors", async () => {
             const stats = { ...testStats, t: { "A": 80, "B": 60 } };
             await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
             // avg of top 2 (only 2 available): (80+60)/2 = 70
-            expect(adapter.states.get("systems.my_server.temperature")?.val).to.equal(70);
+            expect(adapter.states.get("systems.my_server.temperature.average")?.val).to.equal(70);
         });
 
         it("should return null when no temperatures", async () => {
             const stats = { ...testStats, t: undefined };
             await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.temperature")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.temperature.average")?.val).to.be.null;
         });
 
         it("should return null when temperature map is empty", async () => {
             const stats = { ...testStats, t: {} };
             await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.temperature")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.temperature.average")?.val).to.be.null;
         });
 
         it("should NOT create temperature when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_temperature: false }));
-            expect(adapter.states.has("systems.my_server.temperature")).to.be.false;
+            expect(adapter.states.has("systems.my_server.temperature.average")).to.be.false;
         });
 
         it("should round to one decimal place", async () => {
             // Temps: 71, 72, 73 → avg = 72.0
             const stats = { ...testStats, t: { "A": 71, "B": 72, "C": 73 } };
             await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.temperature")?.val).to.equal(72);
+            expect(adapter.states.get("systems.my_server.temperature.average")?.val).to.equal(72);
         });
 
         it("should round fractional avg to one decimal", async () => {
             // Temps: 71, 72, 74 → avg = 72.333... → 72.3
             const stats = { ...testStats, t: { "A": 71, "B": 72, "C": 74 } };
             await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.temperature")?.val).to.equal(72.3);
+            expect(adapter.states.get("systems.my_server.temperature.average")?.val).to.equal(72.3);
         });
 
         it("should set correct role and unit", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            const obj = adapter.objects.get("systems.my_server.temperature");
+            const obj = adapter.objects.get("systems.my_server.temperature.average");
             expect(obj?.common.role).to.equal("value.temperature");
             expect(obj?.common.unit).to.equal("\u00b0C");
         });
@@ -713,16 +713,16 @@ describe("StateManager", () => {
     describe("updateSystem — temperature details", () => {
         it("should create per-sensor states under temperatures channel", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.objects.get("systems.my_server.temperatures")?.type).to.equal("channel");
-            expect(adapter.states.get("systems.my_server.temperatures.core_0")?.val).to.equal(65);
-            expect(adapter.states.get("systems.my_server.temperatures.core_1")?.val).to.equal(70);
-            expect(adapter.states.get("systems.my_server.temperatures.core_2")?.val).to.equal(60);
-            expect(adapter.states.get("systems.my_server.temperatures.ssd")?.val).to.equal(45);
+            expect(adapter.objects.get("systems.my_server.temperature.sensors")?.type).to.equal("channel");
+            expect(adapter.states.get("systems.my_server.temperature.sensors.core_0")?.val).to.equal(65);
+            expect(adapter.states.get("systems.my_server.temperature.sensors.core_1")?.val).to.equal(70);
+            expect(adapter.states.get("systems.my_server.temperature.sensors.core_2")?.val).to.equal(60);
+            expect(adapter.states.get("systems.my_server.temperature.sensors.ssd")?.val).to.equal(45);
         });
 
         it("should NOT create temperature details when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_temperatureDetails: false }));
-            expect(adapter.objects.has("systems.my_server.temperatures")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.temperature.sensors")).to.be.false;
         });
     });
 
@@ -733,29 +733,29 @@ describe("StateManager", () => {
     describe("updateSystem — battery", () => {
         it("should create battery states from stats", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.battery_percent")?.val).to.equal(85);
-            expect(adapter.states.get("systems.my_server.battery_charging")?.val).to.be.true;
+            expect(adapter.states.get("systems.my_server.battery.percent")?.val).to.equal(85);
+            expect(adapter.states.get("systems.my_server.battery.charging")?.val).to.be.true;
         });
 
         it("should fallback to system.info.bat when stats have no bat", async () => {
             const sysWithBat = { ...testSystem, info: { ...testSystem.info, bat: [50, 0] as [number, number] } };
             const statsNoBat = { ...testStats, bat: undefined };
             await manager.updateSystem(sysWithBat, statsNoBat, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.battery_percent")?.val).to.equal(50);
-            expect(adapter.states.get("systems.my_server.battery_charging")?.val).to.be.false;
+            expect(adapter.states.get("systems.my_server.battery.percent")?.val).to.equal(50);
+            expect(adapter.states.get("systems.my_server.battery.charging")?.val).to.be.false;
         });
 
         it("should handle no battery data", async () => {
             const sysNoBat = { ...testSystem, info: {} };
             const statsNoBat = { ...testStats, bat: undefined };
             await manager.updateSystem(sysNoBat, statsNoBat, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.battery_percent")?.val).to.be.null;
-            expect(adapter.states.get("systems.my_server.battery_charging")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.battery.percent")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.battery.charging")?.val).to.be.null;
         });
 
         it("should NOT create battery states when disabled", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig({ metrics_battery: false }));
-            expect(adapter.states.has("systems.my_server.battery_percent")).to.be.false;
+            expect(adapter.states.has("systems.my_server.battery.percent")).to.be.false;
         });
     });
 
@@ -924,19 +924,19 @@ describe("StateManager", () => {
     describe("updateSystem — without stats", () => {
         it("should still create online, status, uptime, agent_version, services", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
-            expect(adapter.states.get("systems.my_server.online")?.val).to.be.true;
-            expect(adapter.states.get("systems.my_server.status")?.val).to.equal("up");
-            expect(adapter.states.get("systems.my_server.uptime")?.val).to.equal(86400);
-            expect(adapter.states.get("systems.my_server.agent_version")?.val).to.equal("0.8.0");
-            expect(adapter.states.get("systems.my_server.services_total")?.val).to.equal(10);
+            expect(adapter.states.get("systems.my_server.info.online")?.val).to.be.true;
+            expect(adapter.states.get("systems.my_server.info.status")?.val).to.equal("up");
+            expect(adapter.states.get("systems.my_server.info.uptime")?.val).to.equal(86400);
+            expect(adapter.states.get("systems.my_server.info.agent_version")?.val).to.equal("0.8.0");
+            expect(adapter.states.get("systems.my_server.info.services_total")?.val).to.equal(10);
         });
 
         it("should not create stats-based states without stats data", async () => {
             await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
-            expect(adapter.states.has("systems.my_server.cpu_usage")).to.be.false;
-            expect(adapter.states.has("systems.my_server.memory_percent")).to.be.false;
-            expect(adapter.states.has("systems.my_server.disk_percent")).to.be.false;
-            expect(adapter.states.has("systems.my_server.network_sent")).to.be.false;
+            expect(adapter.states.has("systems.my_server.cpu.usage")).to.be.false;
+            expect(adapter.states.has("systems.my_server.memory.percent")).to.be.false;
+            expect(adapter.states.has("systems.my_server.disk.percent")).to.be.false;
+            expect(adapter.states.has("systems.my_server.network.sent")).to.be.false;
         });
     });
 
@@ -947,15 +947,15 @@ describe("StateManager", () => {
     describe("updateSystem — all metrics disabled", () => {
         it("should still create online and status states", async () => {
             await manager.updateSystem(testSystem, testStats, [], noMetricsConfig());
-            expect(adapter.states.has("systems.my_server.online")).to.be.true;
-            expect(adapter.states.has("systems.my_server.status")).to.be.true;
+            expect(adapter.states.has("systems.my_server.info.online")).to.be.true;
+            expect(adapter.states.has("systems.my_server.info.status")).to.be.true;
         });
 
         it("should not create any metric states", async () => {
             await manager.updateSystem(testSystem, testStats, [], noMetricsConfig());
-            expect(adapter.states.has("systems.my_server.uptime")).to.be.false;
-            expect(adapter.states.has("systems.my_server.cpu_usage")).to.be.false;
-            expect(adapter.states.has("systems.my_server.memory_percent")).to.be.false;
+            expect(adapter.states.has("systems.my_server.info.uptime")).to.be.false;
+            expect(adapter.states.has("systems.my_server.cpu.usage")).to.be.false;
+            expect(adapter.states.has("systems.my_server.memory.percent")).to.be.false;
         });
     });
 
@@ -967,31 +967,31 @@ describe("StateManager", () => {
         it("should delete states for disabled metrics", async () => {
             // First, create all states
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.states.has("systems.my_server.cpu_usage")).to.be.true;
-            expect(adapter.states.has("systems.my_server.uptime")).to.be.true;
+            expect(adapter.states.has("systems.my_server.cpu.usage")).to.be.true;
+            expect(adapter.states.has("systems.my_server.info.uptime")).to.be.true;
 
             // Now cleanup with everything disabled
             await manager.cleanupMetrics("my_server", noMetricsConfig());
 
-            expect(adapter.objects.has("systems.my_server.cpu_usage")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.uptime")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.uptime_text")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.agent_version")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.services_total")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.services_failed")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.memory_percent")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.memory_used")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.memory_total")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.swap_used")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.swap_total")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.disk_percent")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.disk_read")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.disk_write")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.network_sent")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.network_recv")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.cpu.usage")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.info.uptime")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.info.uptime_text")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.info.agent_version")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.info.services_total")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.info.services_failed")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.memory.percent")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.memory.used")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.memory.total")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.memory.swap_used")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.memory.swap_total")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.disk.percent")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.disk.read")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.disk.write")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.network.sent")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.network.recv")).to.be.false;
             expect(adapter.objects.has("systems.my_server.temperature")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.battery_percent")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.battery_charging")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.battery.percent")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.battery.charging")).to.be.false;
         });
 
         it("should NOT delete states for enabled metrics", async () => {
@@ -999,20 +999,20 @@ describe("StateManager", () => {
             await manager.cleanupMetrics("my_server", allMetricsConfig());
 
             // All states should still exist
-            expect(adapter.objects.has("systems.my_server.cpu_usage")).to.be.true;
-            expect(adapter.objects.has("systems.my_server.uptime")).to.be.true;
+            expect(adapter.objects.has("systems.my_server.cpu.usage")).to.be.true;
+            expect(adapter.objects.has("systems.my_server.info.uptime")).to.be.true;
         });
 
         it("should delete channel objects recursively for disabled channels", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.objects.has("systems.my_server.temperatures")).to.be.true;
+            expect(adapter.objects.has("systems.my_server.temperature.sensors")).to.be.true;
             expect(adapter.objects.has("systems.my_server.gpu")).to.be.true;
             expect(adapter.objects.has("systems.my_server.filesystems")).to.be.true;
 
             await manager.cleanupMetrics("my_server", noMetricsConfig());
 
-            expect(adapter.objects.has("systems.my_server.temperatures")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.temperatures.core_0")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.temperature.sensors")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.temperature.sensors.core_0")).to.be.false;
             expect(adapter.objects.has("systems.my_server.gpu")).to.be.false;
             expect(adapter.objects.has("systems.my_server.gpu.gpu0")).to.be.false;
             expect(adapter.objects.has("systems.my_server.filesystems")).to.be.false;
@@ -1065,14 +1065,91 @@ describe("StateManager", () => {
 
         it("should recursively delete stale system and its children", async () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
-            expect(adapter.objects.has("systems.my_server.cpu_usage")).to.be.true;
-            expect(adapter.states.has("systems.my_server.cpu_usage")).to.be.true;
+            expect(adapter.objects.has("systems.my_server.cpu.usage")).to.be.true;
+            expect(adapter.states.has("systems.my_server.cpu.usage")).to.be.true;
 
             await manager.cleanupSystems([]);
 
             expect(adapter.objects.has("systems.my_server")).to.be.false;
-            expect(adapter.objects.has("systems.my_server.cpu_usage")).to.be.false;
-            expect(adapter.states.has("systems.my_server.cpu_usage")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.cpu.usage")).to.be.false;
+            expect(adapter.states.has("systems.my_server.cpu.usage")).to.be.false;
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // migrateLegacyStates
+    // -----------------------------------------------------------------------
+
+    describe("migrateLegacyStates", () => {
+        it("should delete legacy flat state objects", async () => {
+            // Simulate pre-0.3.0 flat states
+            adapter.objects.set("systems.my_server", {
+                type: "device",
+                common: { name: "My Server" },
+                native: {},
+            });
+            const legacyStates = [
+                "online", "status", "uptime", "uptime_text",
+                "cpu_usage", "load_avg_1m", "load_avg_5m", "load_avg_15m",
+                "memory_percent", "memory_used", "memory_total",
+                "disk_percent", "disk_used", "disk_total",
+                "disk_read", "disk_write",
+                "network_sent", "network_recv",
+                "temperature",
+            ];
+            for (const s of legacyStates) {
+                adapter.objects.set(`systems.my_server.${s}`, {
+                    type: "state",
+                    common: { name: s },
+                    native: {},
+                });
+            }
+
+            await manager.migrateLegacyStates();
+
+            for (const s of legacyStates) {
+                expect(adapter.objects.has(`systems.my_server.${s}`)).to.be.false;
+            }
+            // Device itself must survive
+            expect(adapter.objects.has("systems.my_server")).to.be.true;
+        });
+
+        it("should delete legacy temperatures channel", async () => {
+            adapter.objects.set("systems.my_server", {
+                type: "device",
+                common: { name: "My Server" },
+                native: {},
+            });
+            adapter.objects.set("systems.my_server.temperatures", {
+                type: "channel",
+                common: { name: "Temperatures" },
+                native: {},
+            });
+            adapter.objects.set("systems.my_server.temperatures.core_0", {
+                type: "state",
+                common: { name: "core_0" },
+                native: {},
+            });
+
+            await manager.migrateLegacyStates();
+
+            expect(adapter.objects.has("systems.my_server.temperatures")).to.be.false;
+            expect(adapter.objects.has("systems.my_server.temperatures.core_0")).to.be.false;
+        });
+
+        it("should do nothing when no legacy states exist", async () => {
+            // Create a system with new channel-based states
+            await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
+            const objectCountBefore = adapter.objects.size;
+
+            await manager.migrateLegacyStates();
+
+            expect(adapter.objects.size).to.equal(objectCountBefore);
+        });
+
+        it("should handle empty adapter with no systems", async () => {
+            // No devices at all — should not throw
+            await manager.migrateLegacyStates();
         });
     });
 
@@ -1093,10 +1170,10 @@ describe("StateManager", () => {
             await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
             await manager.updateSystem(sys2, undefined, [], allMetricsConfig());
 
-            expect(adapter.states.get("systems.my_server.online")?.val).to.be.true;
-            expect(adapter.states.get("systems.web_server.online")?.val).to.be.false;
-            expect(adapter.states.get("systems.my_server.agent_version")?.val).to.equal("0.8.0");
-            expect(adapter.states.get("systems.web_server.agent_version")?.val).to.equal("0.7.0");
+            expect(adapter.states.get("systems.my_server.info.online")?.val).to.be.true;
+            expect(adapter.states.get("systems.web_server.info.online")?.val).to.be.false;
+            expect(adapter.states.get("systems.my_server.info.agent_version")?.val).to.equal("0.8.0");
+            expect(adapter.states.get("systems.web_server.info.agent_version")?.val).to.equal("0.7.0");
         });
     });
 });

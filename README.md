@@ -78,35 +78,77 @@ All metrics are global toggles that apply to **all** systems. Disabled metrics a
 
 ## State Tree
 
+States are organized into channels per metric group. Optional channels (marked *) are only created when the corresponding metric is enabled.
+
 ```
 beszel.0.
-├── info.connection          — Connection status (bool)
+├── info.connection                   — Connection status (bool)
 └── systems.
-    └── {system_name}/       — Device (sanitized name)
-        ├── online           — Is system up? (bool)
-        ├── status           — Status string (up/down/paused/pending)
-        ├── uptime           — Uptime in seconds
-        ├── uptime_text      — Human-readable uptime (e.g. "14d 6h")
-        ├── cpu_usage        — CPU %
-        ├── load_avg_1m      — Load average 1 min
-        ├── load_avg_5m      — Load average 5 min
-        ├── load_avg_15m     — Load average 15 min
-        ├── memory_percent   — RAM %
-        ├── memory_used      — RAM used (GB)
-        ├── memory_total     — RAM total (GB)
-        ├── disk_percent     — Disk %
-        ├── disk_used        — Disk used (GB)
-        ├── disk_total       — Disk total (GB)
-        ├── disk_read        — Disk read (MB/s)
-        ├── disk_write       — Disk write (MB/s)
-        ├── network_sent     — Upload (MB/s)
-        ├── network_recv     — Download (MB/s)
-        ├── temperature      — Avg temperature (°C)
-        ├── temperatures/    — Individual sensors (if enabled)
-        ├── gpu/             — GPU metrics (if enabled)
-        ├── filesystems/     — Extra filesystems (if enabled)
-        └── containers/      — Container metrics (if enabled)
+    └── {system_name}/                — Device (sanitized name)
+        ├── info/                     — System info
+        │   ├── online               — Is system up? (bool, used as device indicator)
+        │   ├── status               — Status string (up/down/paused/pending)
+        │   ├── uptime               — Uptime in seconds
+        │   ├── uptime_text          — Human-readable uptime (e.g. "14d 6h")
+        │   ├── agent_version *      — Beszel agent version
+        │   ├── services_total *     — Systemd services total
+        │   └── services_failed *    — Systemd services failed
+        ├── cpu/                      — CPU metrics
+        │   ├── usage                — CPU usage (%)
+        │   ├── load_1m              — Load average 1 min
+        │   ├── load_5m              — Load average 5 min
+        │   ├── load_15m             — Load average 15 min
+        │   ├── user *               — CPU user (%)
+        │   ├── system *             — CPU system (%)
+        │   ├── iowait *             — CPU I/O wait (%)
+        │   ├── steal *              — CPU steal (%)
+        │   └── idle *               — CPU idle (%)
+        ├── memory/                   — Memory metrics
+        │   ├── percent              — RAM usage (%)
+        │   ├── used                 — RAM used (GB)
+        │   ├── total                — RAM total (GB)
+        │   ├── buffers *            — Buffers + cache (GB)
+        │   ├── zfs_arc *            — ZFS ARC (GB)
+        │   ├── swap_used *          — Swap used (GB)
+        │   └── swap_total *         — Swap total (GB)
+        ├── disk/                     — Disk metrics
+        │   ├── percent              — Disk usage (%)
+        │   ├── used                 — Disk used (GB)
+        │   ├── total                — Disk total (GB)
+        │   ├── read                 — Disk read (MB/s)
+        │   └── write                — Disk write (MB/s)
+        ├── network/                  — Network metrics
+        │   ├── sent                 — Upload (MB/s)
+        │   └── recv                 — Download (MB/s)
+        ├── temperature/              — Temperature metrics
+        │   ├── average              — Avg of top 3 sensors (°C)
+        │   └── sensors/ *           — Individual sensor readings
+        ├── battery/ *                — Battery metrics
+        │   ├── percent              — Battery level (%)
+        │   └── charging             — Is charging? (bool)
+        ├── gpu/ *                    — GPU metrics (per GPU)
+        │   └── {gpu_name}/
+        │       ├── usage            — GPU usage (%)
+        │       ├── memory_used      — VRAM used (GB)
+        │       ├── memory_total     — VRAM total (GB)
+        │       └── power            — Power draw (W)
+        ├── filesystems/ *            — Extra filesystems (per mount)
+        │   └── {fs_name}/
+        │       ├── disk_percent     — Usage (%)
+        │       ├── disk_used        — Used (GB)
+        │       ├── disk_total       — Total (GB)
+        │       ├── read_speed       — Read (MB/s)
+        │       └── write_speed      — Write (MB/s)
+        └── containers/ *             — Docker/Podman containers
+            └── {container_name}/
+                ├── status           — Container status
+                ├── health           — Health (none/starting/healthy/unhealthy)
+                ├── cpu              — CPU usage (%)
+                ├── memory           — Memory (MB)
+                └── image            — Image name
 ```
+
+> **Breaking change in 0.3.0:** States moved from flat paths (e.g. `cpu_usage`) to channels (e.g. `cpu.usage`). Legacy states are automatically cleaned up on first start.
 
 ---
 
@@ -129,6 +171,11 @@ beszel.0.
 ---
 
 ## Changelog
+
+### 0.3.0 (2026-04-12)
+- **Breaking:** Reorganize state tree into channels (info, cpu, memory, disk, network, temperature, battery)
+- Automatic migration removes legacy flat state paths on first start
+- Complete state tree documentation in README
 
 ### 0.2.7 (2026-04-12)
 - Fix README state tree (add 8 missing default-on states), add `no-floating-promises` lint rule, remove redundant CI checkout

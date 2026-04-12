@@ -54,14 +54,15 @@ class StateManager {
       common: {
         name: system.name,
         statusStates: {
-          onlineId: `${this.adapter.namespace}.${sysId}.online`
+          onlineId: `${this.adapter.namespace}.${sysId}.info.online`
         }
       },
       native: { id: system.id, host: system.host }
     });
+    await this.ensureChannel(`${sysId}.info`, "Info");
     const isUp = system.status === "up";
     await this.createAndSetState(
-      `${sysId}.online`,
+      `${sysId}.info.online`,
       {
         name: "Online",
         type: "boolean",
@@ -72,7 +73,7 @@ class StateManager {
       isUp
     );
     await this.createAndSetState(
-      `${sysId}.status`,
+      `${sysId}.info.status`,
       {
         name: "Status",
         type: "string",
@@ -85,7 +86,7 @@ class StateManager {
     if (config.metrics_uptime) {
       const uptime = (_a = system.info.u) != null ? _a : null;
       await this.createAndSetState(
-        `${sysId}.uptime`,
+        `${sysId}.info.uptime`,
         {
           name: "Uptime",
           type: "number",
@@ -97,7 +98,7 @@ class StateManager {
         uptime
       );
       await this.createAndSetState(
-        `${sysId}.uptime_text`,
+        `${sysId}.info.uptime_text`,
         {
           name: "Uptime (formatted)",
           type: "string",
@@ -110,7 +111,7 @@ class StateManager {
     }
     if (config.metrics_agentVersion) {
       await this.createAndSetState(
-        `${sysId}.agent_version`,
+        `${sysId}.info.agent_version`,
         {
           name: "Agent Version",
           type: "string",
@@ -124,7 +125,7 @@ class StateManager {
     if (config.metrics_services) {
       const sv = system.info.sv;
       await this.createAndSetState(
-        `${sysId}.services_total`,
+        `${sysId}.info.services_total`,
         {
           name: "Services Total",
           type: "number",
@@ -135,7 +136,7 @@ class StateManager {
         (_c = sv == null ? void 0 : sv[0]) != null ? _c : null
       );
       await this.createAndSetState(
-        `${sysId}.services_failed`,
+        `${sysId}.info.services_failed`,
         {
           name: "Services Failed",
           type: "number",
@@ -150,6 +151,7 @@ class StateManager {
       await this.updateStatsStates(sysId, system, stats, config);
     }
     if (config.metrics_loadAvg && !stats) {
+      await this.ensureChannel(`${sysId}.cpu`, "CPU");
       await this.createLoadAvgStates(sysId, system.info.la);
     }
     if (config.metrics_containers) {
@@ -195,64 +197,67 @@ class StateManager {
     const sysId = `systems.${systemId}`;
     const toDelete = [];
     if (!config.metrics_uptime) {
-      toDelete.push(`${sysId}.uptime`, `${sysId}.uptime_text`);
+      toDelete.push(`${sysId}.info.uptime`, `${sysId}.info.uptime_text`);
     }
     if (!config.metrics_agentVersion) {
-      toDelete.push(`${sysId}.agent_version`);
+      toDelete.push(`${sysId}.info.agent_version`);
     }
     if (!config.metrics_services) {
-      toDelete.push(`${sysId}.services_total`, `${sysId}.services_failed`);
+      toDelete.push(
+        `${sysId}.info.services_total`,
+        `${sysId}.info.services_failed`
+      );
     }
     if (!config.metrics_cpu) {
-      toDelete.push(`${sysId}.cpu_usage`);
+      toDelete.push(`${sysId}.cpu.usage`);
     }
     if (!config.metrics_loadAvg) {
       toDelete.push(
-        `${sysId}.load_avg_1m`,
-        `${sysId}.load_avg_5m`,
-        `${sysId}.load_avg_15m`
+        `${sysId}.cpu.load_1m`,
+        `${sysId}.cpu.load_5m`,
+        `${sysId}.cpu.load_15m`
       );
     }
     if (!config.metrics_cpuBreakdown) {
       toDelete.push(
-        `${sysId}.cpu_user`,
-        `${sysId}.cpu_system`,
-        `${sysId}.cpu_iowait`,
-        `${sysId}.cpu_steal`,
-        `${sysId}.cpu_idle`
+        `${sysId}.cpu.user`,
+        `${sysId}.cpu.system`,
+        `${sysId}.cpu.iowait`,
+        `${sysId}.cpu.steal`,
+        `${sysId}.cpu.idle`
       );
     }
     if (!config.metrics_memory) {
       toDelete.push(
-        `${sysId}.memory_percent`,
-        `${sysId}.memory_used`,
-        `${sysId}.memory_total`
+        `${sysId}.memory.percent`,
+        `${sysId}.memory.used`,
+        `${sysId}.memory.total`
       );
     }
     if (!config.metrics_memoryDetails) {
-      toDelete.push(`${sysId}.memory_buffers`, `${sysId}.memory_zfs_arc`);
+      toDelete.push(`${sysId}.memory.buffers`, `${sysId}.memory.zfs_arc`);
     }
     if (!config.metrics_swap) {
-      toDelete.push(`${sysId}.swap_used`, `${sysId}.swap_total`);
+      toDelete.push(`${sysId}.memory.swap_used`, `${sysId}.memory.swap_total`);
     }
     if (!config.metrics_disk) {
       toDelete.push(
-        `${sysId}.disk_percent`,
-        `${sysId}.disk_used`,
-        `${sysId}.disk_total`
+        `${sysId}.disk.percent`,
+        `${sysId}.disk.used`,
+        `${sysId}.disk.total`
       );
     }
     if (!config.metrics_diskSpeed) {
-      toDelete.push(`${sysId}.disk_read`, `${sysId}.disk_write`);
+      toDelete.push(`${sysId}.disk.read`, `${sysId}.disk.write`);
     }
     if (!config.metrics_network) {
-      toDelete.push(`${sysId}.network_sent`, `${sysId}.network_recv`);
+      toDelete.push(`${sysId}.network.sent`, `${sysId}.network.recv`);
     }
     if (!config.metrics_temperature) {
-      toDelete.push(`${sysId}.temperature`);
+      toDelete.push(`${sysId}.temperature.average`);
     }
     if (!config.metrics_battery) {
-      toDelete.push(`${sysId}.battery_percent`, `${sysId}.battery_charging`);
+      toDelete.push(`${sysId}.battery.percent`, `${sysId}.battery.charging`);
     }
     for (const id of toDelete) {
       const obj = await this.adapter.getObjectAsync(id);
@@ -260,8 +265,30 @@ class StateManager {
         await this.adapter.delObjectAsync(id);
       }
     }
+    const noCpu = !config.metrics_cpu && !config.metrics_loadAvg && !config.metrics_cpuBreakdown;
+    if (noCpu) {
+      await this.deleteChannelIfExists(`${sysId}.cpu`);
+    }
+    const noMemory = !config.metrics_memory && !config.metrics_memoryDetails && !config.metrics_swap;
+    if (noMemory) {
+      await this.deleteChannelIfExists(`${sysId}.memory`);
+    }
+    const noDisk = !config.metrics_disk && !config.metrics_diskSpeed;
+    if (noDisk) {
+      await this.deleteChannelIfExists(`${sysId}.disk`);
+    }
+    if (!config.metrics_network) {
+      await this.deleteChannelIfExists(`${sysId}.network`);
+    }
+    const noTemp = !config.metrics_temperature && !config.metrics_temperatureDetails;
+    if (noTemp) {
+      await this.deleteChannelIfExists(`${sysId}.temperature`);
+    }
+    if (!config.metrics_battery) {
+      await this.deleteChannelIfExists(`${sysId}.battery`);
+    }
     if (!config.metrics_temperatureDetails) {
-      await this.deleteChannelIfExists(`${sysId}.temperatures`);
+      await this.deleteChannelIfExists(`${sysId}.temperature.sensors`);
     }
     if (!config.metrics_gpu) {
       await this.deleteChannelIfExists(`${sysId}.gpu`);
@@ -273,14 +300,102 @@ class StateManager {
       await this.deleteChannelIfExists(`${sysId}.containers`);
     }
   }
+  /**
+   * Remove legacy flat state paths from pre-0.3.0 installations.
+   * Must be called once during onReady before the first poll.
+   */
+  async migrateLegacyStates() {
+    const objects = await this.adapter.getObjectViewAsync("system", "device", {
+      startkey: `${this.adapter.namespace}.systems.`,
+      endkey: `${this.adapter.namespace}.systems.\u9999`
+    });
+    if (!(objects == null ? void 0 : objects.rows)) {
+      return;
+    }
+    const legacyStates = [
+      "online",
+      "status",
+      "uptime",
+      "uptime_text",
+      "agent_version",
+      "services_total",
+      "services_failed",
+      "cpu_usage",
+      "load_avg_1m",
+      "load_avg_5m",
+      "load_avg_15m",
+      "cpu_user",
+      "cpu_system",
+      "cpu_iowait",
+      "cpu_steal",
+      "cpu_idle",
+      "memory_percent",
+      "memory_used",
+      "memory_total",
+      "buffers",
+      "zfs_arc",
+      "swap_used",
+      "swap_total",
+      "disk_percent",
+      "disk_used",
+      "disk_total",
+      "disk_read",
+      "disk_write",
+      "network_sent",
+      "network_recv",
+      "temperature",
+      "battery_percent",
+      "battery_charging"
+    ];
+    let migrated = 0;
+    for (const row of objects.rows) {
+      const relId = row.id.startsWith(`${this.adapter.namespace}.`) ? row.id.slice(this.adapter.namespace.length + 1) : row.id;
+      const parts = relId.split(".");
+      if (parts.length !== 2 || parts[0] !== "systems") {
+        continue;
+      }
+      for (const stateId of legacyStates) {
+        const fullId = `${relId}.${stateId}`;
+        const obj = await this.adapter.getObjectAsync(fullId);
+        if (obj && obj.type === "state") {
+          await this.adapter.delObjectAsync(fullId);
+          migrated++;
+        }
+      }
+      await this.deleteChannelIfExists(`${relId}.temperatures`);
+    }
+    if (migrated > 0) {
+      this.adapter.log.info(
+        `Migration: removed ${migrated} legacy state(s) from flat structure`
+      );
+    }
+  }
   // -------------------------------------------------------------------------
   // Private helpers
   // -------------------------------------------------------------------------
   async updateStatsStates(sysId, system, stats, config) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A;
+    if (config.metrics_cpu || config.metrics_loadAvg || config.metrics_cpuBreakdown) {
+      await this.ensureChannel(`${sysId}.cpu`, "CPU");
+    }
+    if (config.metrics_memory || config.metrics_memoryDetails || config.metrics_swap) {
+      await this.ensureChannel(`${sysId}.memory`, "Memory");
+    }
+    if (config.metrics_disk || config.metrics_diskSpeed) {
+      await this.ensureChannel(`${sysId}.disk`, "Disk");
+    }
+    if (config.metrics_network) {
+      await this.ensureChannel(`${sysId}.network`, "Network");
+    }
+    if (config.metrics_temperature || config.metrics_temperatureDetails) {
+      await this.ensureChannel(`${sysId}.temperature`, "Temperature");
+    }
+    if (config.metrics_battery) {
+      await this.ensureChannel(`${sysId}.battery`, "Battery");
+    }
     if (config.metrics_cpu) {
       await this.createAndSetState(
-        `${sysId}.cpu_usage`,
+        `${sysId}.cpu.usage`,
         {
           name: "CPU Usage",
           type: "number",
@@ -300,7 +415,7 @@ class StateManager {
     if (config.metrics_cpuBreakdown && stats.cpub && stats.cpub.length >= 5) {
       const [user, sys, iowait, steal, idle] = stats.cpub;
       await this.createAndSetState(
-        `${sysId}.cpu_user`,
+        `${sysId}.cpu.user`,
         {
           name: "CPU User %",
           type: "number",
@@ -314,7 +429,7 @@ class StateManager {
         user
       );
       await this.createAndSetState(
-        `${sysId}.cpu_system`,
+        `${sysId}.cpu.system`,
         {
           name: "CPU System %",
           type: "number",
@@ -328,7 +443,7 @@ class StateManager {
         sys
       );
       await this.createAndSetState(
-        `${sysId}.cpu_iowait`,
+        `${sysId}.cpu.iowait`,
         {
           name: "CPU IOWait %",
           type: "number",
@@ -342,7 +457,7 @@ class StateManager {
         iowait
       );
       await this.createAndSetState(
-        `${sysId}.cpu_steal`,
+        `${sysId}.cpu.steal`,
         {
           name: "CPU Steal %",
           type: "number",
@@ -356,7 +471,7 @@ class StateManager {
         steal
       );
       await this.createAndSetState(
-        `${sysId}.cpu_idle`,
+        `${sysId}.cpu.idle`,
         {
           name: "CPU Idle %",
           type: "number",
@@ -372,7 +487,7 @@ class StateManager {
     }
     if (config.metrics_memory) {
       await this.createAndSetState(
-        `${sysId}.memory_percent`,
+        `${sysId}.memory.percent`,
         {
           name: "Memory %",
           type: "number",
@@ -386,7 +501,7 @@ class StateManager {
         (_c = stats.mp) != null ? _c : null
       );
       await this.createAndSetState(
-        `${sysId}.memory_used`,
+        `${sysId}.memory.used`,
         {
           name: "Memory Used",
           type: "number",
@@ -398,7 +513,7 @@ class StateManager {
         (_d = stats.mu) != null ? _d : null
       );
       await this.createAndSetState(
-        `${sysId}.memory_total`,
+        `${sysId}.memory.total`,
         {
           name: "Memory Total",
           type: "number",
@@ -412,7 +527,7 @@ class StateManager {
     }
     if (config.metrics_memoryDetails) {
       await this.createAndSetState(
-        `${sysId}.memory_buffers`,
+        `${sysId}.memory.buffers`,
         {
           name: "Memory Buffers+Cache",
           type: "number",
@@ -424,7 +539,7 @@ class StateManager {
         (_f = stats.mb) != null ? _f : null
       );
       await this.createAndSetState(
-        `${sysId}.memory_zfs_arc`,
+        `${sysId}.memory.zfs_arc`,
         {
           name: "Memory ZFS ARC",
           type: "number",
@@ -438,7 +553,7 @@ class StateManager {
     }
     if (config.metrics_swap) {
       await this.createAndSetState(
-        `${sysId}.swap_used`,
+        `${sysId}.memory.swap_used`,
         {
           name: "Swap Used",
           type: "number",
@@ -450,7 +565,7 @@ class StateManager {
         (_h = stats.su) != null ? _h : null
       );
       await this.createAndSetState(
-        `${sysId}.swap_total`,
+        `${sysId}.memory.swap_total`,
         {
           name: "Swap Total",
           type: "number",
@@ -464,7 +579,7 @@ class StateManager {
     }
     if (config.metrics_disk) {
       await this.createAndSetState(
-        `${sysId}.disk_percent`,
+        `${sysId}.disk.percent`,
         {
           name: "Disk %",
           type: "number",
@@ -478,7 +593,7 @@ class StateManager {
         (_j = stats.dp) != null ? _j : null
       );
       await this.createAndSetState(
-        `${sysId}.disk_used`,
+        `${sysId}.disk.used`,
         {
           name: "Disk Used",
           type: "number",
@@ -490,7 +605,7 @@ class StateManager {
         (_k = stats.du) != null ? _k : null
       );
       await this.createAndSetState(
-        `${sysId}.disk_total`,
+        `${sysId}.disk.total`,
         {
           name: "Disk Total",
           type: "number",
@@ -504,7 +619,7 @@ class StateManager {
     }
     if (config.metrics_diskSpeed) {
       await this.createAndSetState(
-        `${sysId}.disk_read`,
+        `${sysId}.disk.read`,
         {
           name: "Disk Read",
           type: "number",
@@ -516,7 +631,7 @@ class StateManager {
         (_m = stats.dr) != null ? _m : null
       );
       await this.createAndSetState(
-        `${sysId}.disk_write`,
+        `${sysId}.disk.write`,
         {
           name: "Disk Write",
           type: "number",
@@ -530,7 +645,7 @@ class StateManager {
     }
     if (config.metrics_network) {
       await this.createAndSetState(
-        `${sysId}.network_sent`,
+        `${sysId}.network.sent`,
         {
           name: "Network Sent",
           type: "number",
@@ -542,7 +657,7 @@ class StateManager {
         (_o = stats.ns) != null ? _o : null
       );
       await this.createAndSetState(
-        `${sysId}.network_recv`,
+        `${sysId}.network.recv`,
         {
           name: "Network Received",
           type: "number",
@@ -557,7 +672,7 @@ class StateManager {
     if (config.metrics_temperature) {
       const avgTemp = this.computeTopAvgTemp(stats.t);
       await this.createAndSetState(
-        `${sysId}.temperature`,
+        `${sysId}.temperature.average`,
         {
           name: "Temperature (avg top 3)",
           type: "number",
@@ -570,11 +685,11 @@ class StateManager {
       );
     }
     if (config.metrics_temperatureDetails && stats.t) {
-      await this.ensureChannel(`${sysId}.temperatures`, "Temperatures");
+      await this.ensureChannel(`${sysId}.temperature.sensors`, "Sensors");
       for (const [sensor, temp] of Object.entries(stats.t)) {
         const sensorId = this.sanitize(sensor);
         await this.createAndSetState(
-          `${sysId}.temperatures.${sensorId}`,
+          `${sysId}.temperature.sensors.${sensorId}`,
           {
             name: sensor,
             type: "number",
@@ -587,12 +702,12 @@ class StateManager {
         );
       }
     } else if (!config.metrics_temperatureDetails) {
-      await this.deleteChannelIfExists(`${sysId}.temperatures`);
+      await this.deleteChannelIfExists(`${sysId}.temperature.sensors`);
     }
     if (config.metrics_battery) {
       const bat = (_q = stats.bat) != null ? _q : system.info.bat;
       await this.createAndSetState(
-        `${sysId}.battery_percent`,
+        `${sysId}.battery.percent`,
         {
           name: "Battery %",
           type: "number",
@@ -606,7 +721,7 @@ class StateManager {
         (_r = bat == null ? void 0 : bat[0]) != null ? _r : null
       );
       await this.createAndSetState(
-        `${sysId}.battery_charging`,
+        `${sysId}.battery.charging`,
         {
           name: "Battery Charging",
           type: "boolean",
@@ -849,7 +964,7 @@ class StateManager {
   async createLoadAvgStates(sysId, la) {
     var _a, _b, _c;
     await this.createAndSetState(
-      `${sysId}.load_avg_1m`,
+      `${sysId}.cpu.load_1m`,
       {
         name: "Load Average 1m",
         type: "number",
@@ -860,7 +975,7 @@ class StateManager {
       (_a = la == null ? void 0 : la[0]) != null ? _a : null
     );
     await this.createAndSetState(
-      `${sysId}.load_avg_5m`,
+      `${sysId}.cpu.load_5m`,
       {
         name: "Load Average 5m",
         type: "number",
@@ -871,7 +986,7 @@ class StateManager {
       (_b = la == null ? void 0 : la[1]) != null ? _b : null
     );
     await this.createAndSetState(
-      `${sysId}.load_avg_15m`,
+      `${sysId}.cpu.load_15m`,
       {
         name: "Load Average 15m",
         type: "number",

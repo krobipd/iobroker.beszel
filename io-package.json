@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.2.7",
+    "version": "0.3.0",
     "news": {
+      "0.3.0": {
+        "en": "Breaking: Reorganize state tree into channels (info, cpu, memory, disk, network, temperature, battery). Automatic migration of legacy states.",
+        "de": "Breaking: State-Tree in Channels reorganisiert (info, cpu, memory, disk, network, temperature, battery). Automatische Migration alter States.",
+        "ru": "Breaking: Реорганизация дерева состояний в каналы (info, cpu, memory, disk, network, temperature, battery). Автоматическая миграция.",
+        "pt": "Breaking: Reorganização da árvore de estados em canais (info, cpu, memory, disk, network, temperature, battery). Migração automática.",
+        "nl": "Breaking: State-tree gereorganiseerd in channels (info, cpu, memory, disk, network, temperature, battery). Automatische migratie.",
+        "fr": "Breaking: Réorganisation de l'arborescence en canaux (info, cpu, memory, disk, network, temperature, battery). Migration automatique.",
+        "it": "Breaking: Riorganizzazione albero stati in canali (info, cpu, memory, disk, network, temperature, battery). Migrazione automatica.",
+        "es": "Breaking: Reorganización del árbol de estados en canales (info, cpu, memory, disk, network, temperature, battery). Migración automática.",
+        "pl": "Breaking: Reorganizacja drzewa stanów w kanały (info, cpu, memory, disk, network, temperature, battery). Automatyczna migracja.",
+        "uk": "Breaking: Реорганізація дерева станів у канали (info, cpu, memory, disk, network, temperature, battery). Автоматична міграція.",
+        "zh-cn": "重大变更：将状态树重新组织为通道（info、cpu、memory、disk、network、temperature、battery）。自动迁移旧状态。"
+      },
       "0.2.7": {
         "en": "Fix README state tree, add no-floating-promises lint rule, remove redundant CI checkout",
         "de": "README State-Tree korrigiert, no-floating-promises Lint-Regel hinzugefügt, redundanten CI-Checkout entfernt",
@@ -80,19 +93,6 @@
         "pl": "Modernizacja narzędzi programistycznych (esbuild, TypeScript 5.9, testing-action-check v2)",
         "uk": "Модернізація інструментів розробки (esbuild, TypeScript 5.9, testing-action-check v2)",
         "zh-cn": "开发工具现代化（esbuild、TypeScript 5.9 固定、testing-action-check v2）"
-      },
-      "0.2.1": {
-        "en": "Error handling: dedup repeated errors, auth backoff, protect against empty system list deletion",
-        "de": "Fehlerbehandlung: Doppelte Fehler unterdrücken, Auth-Backoff, Schutz gegen Löschung bei leerer Systemliste",
-        "ru": "Обработка ошибок: дедупликация повторяющихся ошибок, откат аутентификации, защита от удаления при пустом списке систем",
-        "pt": "Tratamento de erros: deduplicação de erros repetidos, backoff de autenticação, proteção contra exclusão com lista vazia",
-        "nl": "Foutafhandeling: deduplicatie van herhaalde fouten, auth-backoff, bescherming tegen verwijdering bij lege systeemlijst",
-        "fr": "Gestion des erreurs: dédoublonnage des erreurs répétées, backoff d'authentification, protection contre la suppression avec liste vide",
-        "it": "Gestione errori: deduplicazione errori ripetuti, backoff autenticazione, protezione contro cancellazione con lista vuota",
-        "es": "Manejo de errores: deduplicación de errores repetidos, backoff de autenticación, protección contra eliminación con lista vacía",
-        "pl": "Obsługa błędów: deduplikacja powtarzających się błędów, backoff uwierzytelniania, ochrona przed usunięciem przy pustej liście",
-        "uk": "Обробка помилок: дедуплікація повторюваних помилок, відкат автентифікації, захист від видалення при порожньому списку",
-        "zh-cn": "错误处理：重复错误去重、认证退避、防止空系统列表删除"
       }
     },
     "titleLang": {

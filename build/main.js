@@ -74,6 +74,7 @@ class BeszelAdapter extends utils.Adapter {
       config.password
     );
     this.stateManager = new import_state_manager.StateManager(this);
+    await this.stateManager.migrateLegacyStates();
     const existingObjects = await this.getObjectViewAsync("system", "device", {
       startkey: `${this.namespace}.systems.`,
       endkey: `${this.namespace}.systems.\u9999`

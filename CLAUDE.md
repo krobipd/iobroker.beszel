@@ -6,7 +6,7 @@
 
 **ioBroker Beszel Monitor** — Verbindet sich mit Beszel Hub (PocketBase) für Server-Monitoring.
 
-- **Version:** 0.2.7 (April 2026)
+- **Version:** 0.3.0 (April 2026)
 - **GitHub:** https://github.com/krobipd/ioBroker.beszel
 - **npm:** https://www.npmjs.com/package/iobroker.beszel
 - **Repository PR:** ioBroker/ioBroker.repositories#5787
@@ -29,6 +29,8 @@ src/lib/types.ts         → TypeScript Interfaces (API + Config)
 4. **Auth-Backoff** — nach 3 fehlgeschlagenen Versuchen weitere Auth-Fehler unterdrückt
 5. **Empty-Systems-Guard** — leere API-Antwort löscht NICHT alle Geräte
 6. **Metric-Cleanup** — deaktivierte Metriken werden beim Start gelöscht
+10. **Channel-basierter State-Tree** — States in Channels organisiert (info, cpu, memory, disk, network, temperature, battery)
+11. **Legacy-Migration** — `migrateLegacyStates()` löscht alte flache State-Pfade aus pre-0.3.0
 7. **Load-Avg Fallback** — `stats.la` bevorzugt, Fallback auf `system.info.la`
 8. **Temperatur** — Durchschnitt der 3 heißesten Sensoren
 9. **Name-Sanitization** — lowercase, non-alphanumeric → `_`, max 50 chars
@@ -37,11 +39,11 @@ src/lib/types.ts         → TypeScript Interfaces (API + Config)
 
 20+ konfigurierbare Metriken (global für alle Systeme). Standard-on: uptime, cpu, loadAvg, memory, disk, diskSpeed, network, temperature. Alle anderen default off.
 
-## Tests (183)
+## Tests (187)
 
 ```
 test/testBeszelClient.ts  → API Client (Auth, Token, Errors, Responses) (27 Tests)
-test/testStateManager.ts  → StateManager (Sanitize, System, Stats, GPU, FS, Containers, Cleanup) (99 Tests)
+test/testStateManager.ts  → StateManager (Sanitize, System, Stats, GPU, FS, Containers, Cleanup, Migration) (103 Tests)
 test/package.js           → @iobroker/testing Package-Tests (57 Tests)
 test/integration.js       → @iobroker/testing Integration-Tests (plain JS)
 ```
@@ -52,6 +54,7 @@ Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Call
 
 | Version | Highlights |
 |---------|------------|
+| 0.3.0 | **Breaking:** Channel-basierter State-Tree, Legacy-Migration, vollständige State-Tree-Doku |
 | 0.2.7 | README State-Tree Fix, no-floating-promises, CI checkout entfernt |
 | 0.2.6 | node: Prefix für built-in Module (S5043) |
 | 0.2.5 | Review-Fixes: Standard-Tests (plain JS), CHANGELOG.md entfernt, FORBIDDEN_CHARS-Ref |
