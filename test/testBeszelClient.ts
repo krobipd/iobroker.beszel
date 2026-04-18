@@ -582,6 +582,264 @@ describe("BeszelClient", () => {
     });
 
     // -----------------------------------------------------------------------
+    // API drift / boundary hardening
+    // -----------------------------------------------------------------------
+
+    describe("API drift hardening", () => {
+        it("rejects auth response with non-string token", async () => {
+            mock = createMockServer({
+                authHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        token: 42,
+                        record: { id: "u", email: "e" },
+                    }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "a", "b");
+            try {
+                await client.getSystems();
+                expect.fail("Should have thrown");
+            } catch (err) {
+                expect((err as NodeJS.ErrnoException).code).to.equal(
+                    "INVALID_AUTH_RESPONSE",
+                );
+            }
+        });
+
+        it("rejects auth response when token is missing", async () => {
+            mock = createMockServer({
+                authHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        record: { id: "u", email: "e" },
+                    }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "a", "b");
+            try {
+                await client.getSystems();
+                expect.fail("Should have thrown");
+            } catch (err) {
+                expect((err as NodeJS.ErrnoException).code).to.equal(
+                    "INVALID_AUTH_RESPONSE",
+                );
+            }
+        });
+
+        it("returns empty systems array when items is missing", async () => {
+            mock = createMockServer({
+                systemsHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({ page: 1 }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const systems = await client.getSystems();
+            expect(systems).to.deep.equal([]);
+        });
+
+        it("returns empty systems array when items is not an array", async () => {
+            mock = createMockServer({
+                systemsHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({ items: "not an array" }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const systems = await client.getSystems();
+            expect(systems).to.deep.equal([]);
+        });
+
+        it("skips system records without id or name", async () => {
+            mock = createMockServer({
+                systemsHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        items: [
+                            { id: "a", name: "ok", status: "up", host: "h" },
+                            { name: "no-id", status: "up" },
+                            { id: "c" },
+                        ],
+                    }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const systems = await client.getSystems();
+            expect(systems).to.have.lengthOf(1);
+            expect(systems[0].id).to.equal("a");
+        });
+
+        it("falls back to 'pending' status for unknown status strings", async () => {
+            mock = createMockServer({
+                systemsHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        items: [{ id: "a", name: "s", status: "weird-state" }],
+                    }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const systems = await client.getSystems();
+            expect(systems[0].status).to.equal("pending");
+        });
+
+        it("drops non-finite stats values instead of passing them through", async () => {
+            mock = createMockServer({
+                statsHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        items: [
+                            {
+                                id: "s1",
+                                system: "sys001",
+                                type: "1m",
+                                stats: {
+                                    cpu: null,
+                                    mu: "not-a-number",
+                                    m: 16,
+                                },
+                                updated: "",
+                            },
+                        ],
+                    }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const stats = await client.getLatestStats(["sys001"]);
+            const s = stats.get("sys001")!;
+            expect(s.cpu).to.be.undefined;
+            expect(s.mu).to.be.undefined;
+            expect(s.m).to.equal(16);
+        });
+
+        it("drops la tuple when it contains a non-finite number", async () => {
+            mock = createMockServer({
+                statsHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        items: [
+                            {
+                                id: "s1",
+                                system: "sys001",
+                                type: "1m",
+                                stats: { la: [1, "bad", 3] },
+                                updated: "",
+                            },
+                        ],
+                    }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const stats = await client.getLatestStats(["sys001"]);
+            expect(stats.get("sys001")!.la).to.be.undefined;
+        });
+
+        it("filters temperature map while keeping valid entries", async () => {
+            mock = createMockServer({
+                statsHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        items: [
+                            {
+                                id: "s1",
+                                system: "sys001",
+                                type: "1m",
+                                stats: {
+                                    t: { cpu: 55, gpu: "hot", fan: null, mb: 48 },
+                                },
+                                updated: "",
+                            },
+                        ],
+                    }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const stats = await client.getLatestStats(["sys001"]);
+            expect(stats.get("sys001")!.t).to.deep.equal({ cpu: 55, mb: 48 });
+        });
+
+        it("skips container records without required fields", async () => {
+            mock = createMockServer({
+                containersHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        items: [
+                            { id: "c1", system: "s1", name: "ok", cpu: 5 },
+                            { system: "s1", name: "no-id" },
+                            { id: "c2", name: "no-system" },
+                        ],
+                    }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const containers = await client.getContainers();
+            expect(containers).to.have.lengthOf(1);
+            expect(containers[0].name).to.equal("ok");
+        });
+
+        it("defaults container numeric fields to 0 when missing or wrong type", async () => {
+            mock = createMockServer({
+                containersHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        items: [
+                            {
+                                id: "c1",
+                                system: "s1",
+                                name: "app",
+                                cpu: "bad",
+                                memory: null,
+                            },
+                        ],
+                    }),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const containers = await client.getContainers();
+            expect(containers[0].cpu).to.equal(0);
+            expect(containers[0].memory).to.equal(0);
+            expect(containers[0].health).to.equal(0);
+        });
+
+        it("returns empty list when stats response is a JSON array instead of object", async () => {
+            mock = createMockServer({
+                statsHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify([1, 2, 3]),
+                }),
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const stats = await client.getLatestStats(["sys001"]);
+            expect(stats.size).to.equal(0);
+        });
+    });
+
+    // -----------------------------------------------------------------------
     // Request headers
     // -----------------------------------------------------------------------
 

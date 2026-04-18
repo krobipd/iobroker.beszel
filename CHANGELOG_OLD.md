@@ -1,5 +1,11 @@
 # Older Changes
 
+## 0.2.3 (2026-04-05)
+- Remove redundant scripts, unused devDependencies, compress documentation
+
+## 0.2.2 (2026-04-03)
+- Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)
+
 ## 0.2.1 (2026-03-28)
 - Error deduplication, auth backoff after 3 failures, empty-systems guard
 

@@ -6,7 +6,7 @@
 
 **ioBroker Beszel Monitor** — Verbindet sich mit Beszel Hub (PocketBase) für Server-Monitoring.
 
-- **Version:** 0.3.1 (April 2026)
+- **Version:** 0.3.2 (April 2026)
 - **GitHub:** https://github.com/krobipd/ioBroker.beszel
 - **npm:** https://www.npmjs.com/package/iobroker.beszel
 - **Repository PR:** ioBroker/ioBroker.repositories#5787
@@ -17,6 +17,7 @@
 ```
 src/main.ts              → Adapter (Lifecycle, Polling, Message-Handler)
 src/lib/beszel-client.ts → HTTP Client (Auth, Systems, Stats, Containers)
+src/lib/coerce.ts        → Boundary-Validator (NaN/Infinity/Typ-Drift)
 src/lib/state-manager.ts → ioBroker States erstellen/updaten/cleanup
 src/lib/types.ts         → TypeScript Interfaces (API + Config)
 ```
@@ -40,11 +41,12 @@ src/lib/types.ts         → TypeScript Interfaces (API + Config)
 
 20+ konfigurierbare Metriken (global für alle Systeme). Standard-on: uptime, cpu, loadAvg, memory, disk, diskSpeed, network, temperature. Alle anderen default off.
 
-## Tests (187)
+## Tests (292)
 
 ```
-test/testBeszelClient.ts  → API Client (Auth, Token, Errors, Responses) (27 Tests)
-test/testStateManager.ts  → StateManager (Sanitize, System, Stats, GPU, FS, Containers, Cleanup, Migration) (103 Tests)
+test/testCoerce.ts        → Boundary-Validator (Primitive + Beszel-Shapes) (74 Tests)
+test/testBeszelClient.ts  → API Client (Auth, Token, Errors, Responses, API-Drift) (39 Tests)
+test/testStateManager.ts  → StateManager (Sanitize, System, Stats, GPU, FS, Containers, Cleanup, Migration, Defensive Boundaries) (122 Tests)
 test/package.js           → @iobroker/testing Package-Tests (57 Tests)
 test/integration.js       → @iobroker/testing Integration-Tests (plain JS)
 ```
@@ -55,6 +57,7 @@ Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Call
 
 | Version | Highlights |
 |---------|------------|
+| 0.3.2 | API-Boundary-Härtung: coerce.ts mit coerceFiniteNumber/String/Boolean/Object + typed coercers (System/Stats/Container/Auth). +105 Drift-Tests |
 | 0.3.1 | Error-Handling: res.on("error"), per-system Poll-Isolation, onMessage try/catch+callback, EHOSTUNREACH |
 | 0.3.0 | **Breaking:** Channel-basierter State-Tree, Legacy-Migration, DRY-Refactor (state-common factories), role-Fix |
 | 0.2.7 | README State-Tree Fix, no-floating-promises, CI checkout entfernt |

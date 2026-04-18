@@ -1176,4 +1176,211 @@ describe("StateManager", () => {
             expect(adapter.states.get("systems.web_server.info.agent_version")?.val).to.equal("0.7.0");
         });
     });
+
+    // -----------------------------------------------------------------------
+    // Defensive boundary behavior
+    // -----------------------------------------------------------------------
+
+    describe("defensive boundaries", () => {
+        it("sanitize returns empty string for non-string input", () => {
+            // Using unknown cast to simulate runtime drift
+            const mgr = manager as unknown as { sanitize(n: unknown): string };
+            expect(mgr.sanitize(null)).to.equal("");
+            expect(mgr.sanitize(undefined)).to.equal("");
+            expect(mgr.sanitize(42)).to.equal("");
+            expect(mgr.sanitize({})).to.equal("");
+            expect(mgr.sanitize([])).to.equal("");
+        });
+
+        it("sanitize collapses all-non-alphanumeric names to empty", () => {
+            expect(manager.sanitize("!!!")).to.equal("");
+            expect(manager.sanitize("---")).to.equal("");
+        });
+
+        it("skips system with unusable sanitized name", async () => {
+            const weirdSystem: BeszelSystem = {
+                id: "sys001",
+                name: "!!!",
+                status: "up",
+                host: "192.168.1.10",
+                info: {},
+            };
+            await manager.updateSystem(weirdSystem, undefined, [], allMetricsConfig());
+            // No state should be created under any "systems." prefix
+            const systemStates = [...adapter.states.keys()].filter((k) =>
+                k.startsWith("systems."),
+            );
+            expect(systemStates).to.have.lengthOf(0);
+        });
+
+        it("writes null to state when uptime is missing from info", async () => {
+            const sys: BeszelSystem = {
+                id: "sys001",
+                name: "Server",
+                status: "up",
+                host: "10.0.0.1",
+                info: {},
+            };
+            await manager.updateSystem(sys, undefined, [], allMetricsConfig());
+            expect(adapter.states.get("systems.server.info.uptime")?.val).to.be.null;
+            expect(adapter.states.get("systems.server.info.uptime_text")?.val).to.be.null;
+        });
+
+        it("writes null for missing stats fields rather than NaN", async () => {
+            const emptyStats: SystemStats = {};
+            await manager.updateSystem(testSystem, emptyStats, [], allMetricsConfig());
+            // Core stats states should exist with null values — never NaN
+            expect(adapter.states.get("systems.my_server.cpu.usage")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.memory.percent")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.memory.used")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.disk.percent")?.val).to.be.null;
+            expect(adapter.states.get("systems.my_server.network.sent")?.val).to.be.null;
+        });
+
+        it("falls back to system.info.la when stats.la is missing", async () => {
+            const statsNoLa: SystemStats = { cpu: 45 };
+            const sys: BeszelSystem = {
+                id: "s",
+                name: "Fallback Server",
+                status: "up",
+                host: "h",
+                info: { la: [0.1, 0.2, 0.3] },
+            };
+            await manager.updateSystem(sys, statsNoLa, [], allMetricsConfig());
+            expect(adapter.states.get("systems.fallback_server.cpu.load_1m")?.val).to.equal(0.1);
+            expect(adapter.states.get("systems.fallback_server.cpu.load_5m")?.val).to.equal(0.2);
+        });
+
+        it("writes null for load avg states when neither stats.la nor info.la exists", async () => {
+            const sys: BeszelSystem = {
+                id: "s",
+                name: "No LA",
+                status: "up",
+                host: "h",
+                info: {},
+            };
+            await manager.updateSystem(sys, { cpu: 10 }, [], allMetricsConfig());
+            expect(adapter.states.get("systems.no_la.cpu.load_1m")?.val).to.be.null;
+            expect(adapter.states.get("systems.no_la.cpu.load_5m")?.val).to.be.null;
+            expect(adapter.states.get("systems.no_la.cpu.load_15m")?.val).to.be.null;
+        });
+
+        it("skips cpuBreakdown when cpub is shorter than 5 elements", async () => {
+            const stats: SystemStats = { cpub: [10, 20] };
+            await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
+            expect(adapter.states.get("systems.my_server.cpu.user")).to.be.undefined;
+        });
+
+        it("uses only valid temperature readings for top-3 average", async () => {
+            const stats: SystemStats = { t: { a: 60, b: 70, c: 80, d: 50 } };
+            await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
+            // Avg of top-3: (80 + 70 + 60) / 3 = 70.0
+            expect(adapter.states.get("systems.my_server.temperature.average")?.val).to.equal(70);
+        });
+
+        it("writes null for temperature average when stats.t is missing", async () => {
+            await manager.updateSystem(testSystem, { cpu: 10 }, [], allMetricsConfig());
+            expect(adapter.states.get("systems.my_server.temperature.average")?.val).to.be.null;
+        });
+
+        it("computes derived filesystem percent even when parts are missing", async () => {
+            const stats: SystemStats = {
+                efs: {
+                    "/data": { d: 1000 }, // total only, no used
+                    "/logs": { d: 100, du: 25 }, // normal
+                },
+            };
+            await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
+            expect(
+                adapter.states.get("systems.my_server.filesystems.data.disk_percent")?.val,
+            ).to.be.null;
+            expect(
+                adapter.states.get("systems.my_server.filesystems.logs.disk_percent")?.val,
+            ).to.equal(25);
+        });
+
+        it("skips containers with unusable sanitized names", async () => {
+            const badContainer: BeszelContainer = {
+                id: "c1",
+                system: "sys001",
+                name: "!!!",
+                status: "running",
+                health: 2,
+                cpu: 5,
+                memory: 128,
+                image: "nginx",
+            };
+            await manager.updateSystem(testSystem, undefined, [badContainer], allMetricsConfig());
+            const containerStates = [...adapter.states.keys()].filter((k) =>
+                k.includes(".containers."),
+            );
+            expect(containerStates).to.have.lengthOf(0);
+        });
+
+        it("uses 'unknown' label for container health value outside known range", async () => {
+            const container: BeszelContainer = {
+                id: "c1",
+                system: "sys001",
+                name: "app",
+                status: "running",
+                health: 99,
+                cpu: 1,
+                memory: 10,
+                image: "img",
+            };
+            await manager.updateSystem(testSystem, undefined, [container], allMetricsConfig());
+            expect(adapter.states.get("systems.my_server.containers.app.health")?.val).to.equal(
+                "unknown",
+            );
+        });
+
+        it("handles battery as [percent, chargeState] tuple correctly", async () => {
+            const stats: SystemStats = { bat: [75, 1] };
+            await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
+            expect(adapter.states.get("systems.my_server.battery.percent")?.val).to.equal(75);
+            expect(adapter.states.get("systems.my_server.battery.charging")?.val).to.be.true;
+        });
+
+        it("reports battery not charging when chargeState is 0", async () => {
+            const stats: SystemStats = { bat: [45, 0] };
+            await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
+            expect(adapter.states.get("systems.my_server.battery.charging")?.val).to.be.false;
+        });
+
+        it("writes null for battery states when no battery info", async () => {
+            const sys: BeszelSystem = {
+                id: "s",
+                name: "No Batt",
+                status: "up",
+                host: "h",
+                info: {},
+            };
+            await manager.updateSystem(sys, { cpu: 10 }, [], allMetricsConfig());
+            expect(adapter.states.get("systems.no_batt.battery.percent")?.val).to.be.null;
+            expect(adapter.states.get("systems.no_batt.battery.charging")?.val).to.be.null;
+        });
+
+        it("does not create GPU channel when stats.g is empty", async () => {
+            const stats: SystemStats = { cpu: 10, g: {} };
+            await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
+            expect(adapter.objects.get("systems.my_server.gpu")).to.be.undefined;
+        });
+
+        it("does not create filesystems channel when stats.efs is empty", async () => {
+            const stats: SystemStats = { cpu: 10, efs: {} };
+            await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
+            expect(adapter.objects.get("systems.my_server.filesystems")).to.be.undefined;
+        });
+
+        it("only creates temperature sensors that exist", async () => {
+            const stats: SystemStats = { t: { "Core 0": 45 } };
+            await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
+            expect(
+                adapter.states.get("systems.my_server.temperature.sensors.core_0"),
+            ).to.not.be.undefined;
+            expect(
+                adapter.states.get("systems.my_server.temperature.sensors.gpu"),
+            ).to.be.undefined;
+        });
+    });
 });

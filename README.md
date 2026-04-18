@@ -21,8 +21,8 @@ Connects to a [Beszel](https://github.com/henrygd/beszel) Hub and exposes server
 - Per-system states: CPU, memory, disk, network, temperature, load average
 - Optional: GPU metrics, Docker/Podman containers, battery, extra filesystems, CPU breakdown, systemd services
 - Configurable poll interval (10–300 seconds)
-- Automatic token refresh (every 23 hours) and re-authentication on 401
-- Connection test button directly in the admin UI
+- Automatic re-authentication when the token expires
+- Connection test button in the admin UI
 - Automatic cleanup of states for removed systems and disabled metrics
 
 ---
@@ -172,6 +172,11 @@ beszel.0.
 
 ## Changelog
 
+### 0.3.2 (2026-04-18)
+- API boundary hardening: every field from the Beszel Hub passes through a type-coercion layer (NaN, Infinity, missing fields, wrong types can no longer reach states)
+- Records missing required identifiers (`id`, `name`) are skipped rather than written as malformed objects
+- `+105` new drift tests covering primitive coercers, API response shape changes, and state-writer edge cases
+
 ### 0.3.1 (2026-04-12)
 - Fix: handle response stream errors (prevents unhandled exceptions on connection drop)
 - Fix: isolate per-system poll failures (one broken system no longer blocks all others)
@@ -195,15 +200,6 @@ beszel.0.
 
 ### 0.2.4 (2026-04-05)
 - Cleaner log messages, remove redundant adapter name prefix
-
-### 0.2.3 (2026-04-05)
-- Remove redundant scripts, unused devDependencies, compress documentation
-
-### 0.2.2 (2026-04-03)
-- Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)
-
-### 0.2.1 (2026-03-28)
-- Error deduplication, auth backoff after 3 failures, empty-systems guard
 
 Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

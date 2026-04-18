@@ -32,10 +32,15 @@ class StateManager {
   /**
    * Sanitize a name to a valid ioBroker state ID segment (see adapter.FORBIDDEN_CHARS).
    * Lowercase, replace non-alphanumeric with _, max 50 chars, trim underscores.
+   * Non-string input is rejected with an empty string so one bad record
+   * cannot crash a poll.
    *
    * @param name Raw name to sanitize
    */
   sanitize(name) {
+    if (typeof name !== "string") {
+      return "";
+    }
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 50);
   }
   /**
@@ -69,7 +74,14 @@ class StateManager {
    */
   async updateSystem(system, stats, containers, config) {
     var _a, _b, _c, _d;
-    const sysId = `systems.${this.sanitize(system.name)}`;
+    const safeName = this.sanitize(system.name);
+    if (safeName.length === 0) {
+      this.adapter.log.warn(
+        `Skipping system with unusable name: ${JSON.stringify(system.name)}`
+      );
+      return;
+    }
+    const sysId = `systems.${safeName}`;
     await this.adapter.extendObjectAsync(sysId, {
       type: "device",
       common: {
@@ -575,6 +587,9 @@ class StateManager {
     const healthLabels = ["none", "starting", "healthy", "unhealthy"];
     for (const container of sysContainers) {
       const cId = this.sanitize(container.name);
+      if (cId.length === 0) {
+        continue;
+      }
       await this.ensureChannel(`${sysId}.containers.${cId}`, container.name);
       await this.createAndSetState(
         `${sysId}.containers.${cId}.status`,

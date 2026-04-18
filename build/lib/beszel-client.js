@@ -34,6 +34,7 @@ module.exports = __toCommonJS(beszel_client_exports);
 var http = __toESM(require("node:http"));
 var https = __toESM(require("node:https"));
 var import_node_url = require("node:url");
+var import_coerce = require("./coerce.js");
 const TOKEN_REFRESH_MS = 23 * 60 * 60 * 1e3;
 class BeszelClient {
   baseUrl;
@@ -75,10 +76,10 @@ class BeszelClient {
   /** Fetch all systems */
   async getSystems() {
     await this.ensureToken();
-    const data = await this.fetchJson(
+    const raw = await this.fetchJson(
       "/api/collections/systems/records?perPage=200&sort=name"
     );
-    return data.items;
+    return (0, import_coerce.coercePocketBaseList)(raw, import_coerce.coerceSystem).items;
   }
   /**
    * Fetch the latest 1m stats per system.
@@ -91,9 +92,10 @@ class BeszelClient {
       return /* @__PURE__ */ new Map();
     }
     await this.ensureToken();
-    const data = await this.fetchJson(
+    const raw = await this.fetchJson(
       "/api/collections/system_stats/records?sort=-updated&perPage=200&filter=type%3D'1m'"
     );
+    const data = (0, import_coerce.coercePocketBaseList)(raw, import_coerce.coerceSystemStatsRecord);
     const result = /* @__PURE__ */ new Map();
     for (const record of data.items) {
       if (!result.has(record.system)) {
@@ -105,10 +107,10 @@ class BeszelClient {
   /** Fetch all containers */
   async getContainers() {
     await this.ensureToken();
-    const data = await this.fetchJson(
+    const raw = await this.fetchJson(
       "/api/collections/containers/records?perPage=500&sort=system%2Cname"
     );
-    return data.items;
+    return (0, import_coerce.coercePocketBaseList)(raw, import_coerce.coerceContainer).items;
   }
   // -------------------------------------------------------------------------
   // Private helpers
@@ -125,14 +127,20 @@ class BeszelClient {
       identity: this.username,
       password: this.password
     });
-    const data = await this.request(
+    const raw = await this.request(
       "POST",
       "/api/collections/users/auth-with-password",
       body,
       null
       // no auth token yet
     );
-    this.token = data.token;
+    const auth = (0, import_coerce.coerceAuthResponse)(raw);
+    if (auth === null) {
+      const err = new Error("Auth response missing valid token");
+      err.code = "INVALID_AUTH_RESPONSE";
+      throw err;
+    }
+    this.token = auth.token;
     this.tokenTime = Date.now();
   }
   async fetchJson(path) {

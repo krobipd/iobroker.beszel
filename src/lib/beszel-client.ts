@@ -1,14 +1,14 @@
 import * as http from "node:http";
 import * as https from "node:https";
 import { URL } from "node:url";
-import type {
-  AuthResponse,
-  BeszelContainer,
-  BeszelSystem,
-  BeszelSystemStats,
-  PocketBaseList,
-  SystemStats,
-} from "./types.js";
+import {
+  coerceAuthResponse,
+  coerceContainer,
+  coercePocketBaseList,
+  coerceSystem,
+  coerceSystemStatsRecord,
+} from "./coerce.js";
+import type { BeszelContainer, BeszelSystem, SystemStats } from "./types.js";
 
 const TOKEN_REFRESH_MS = 23 * 60 * 60 * 1000; // 23 hours
 
@@ -65,10 +65,10 @@ export class BeszelClient {
   /** Fetch all systems */
   public async getSystems(): Promise<BeszelSystem[]> {
     await this.ensureToken();
-    const data = await this.fetchJson<PocketBaseList<BeszelSystem>>(
+    const raw = await this.fetchJson<unknown>(
       "/api/collections/systems/records?perPage=200&sort=name",
     );
-    return data.items;
+    return coercePocketBaseList(raw, coerceSystem).items;
   }
 
   /**
@@ -84,9 +84,10 @@ export class BeszelClient {
       return new Map();
     }
     await this.ensureToken();
-    const data = await this.fetchJson<PocketBaseList<BeszelSystemStats>>(
+    const raw = await this.fetchJson<unknown>(
       "/api/collections/system_stats/records?sort=-updated&perPage=200&filter=type%3D'1m'",
     );
+    const data = coercePocketBaseList(raw, coerceSystemStatsRecord);
 
     // Deduplicate: keep the newest record per system
     const result = new Map<string, SystemStats>();
@@ -101,10 +102,10 @@ export class BeszelClient {
   /** Fetch all containers */
   public async getContainers(): Promise<BeszelContainer[]> {
     await this.ensureToken();
-    const data = await this.fetchJson<PocketBaseList<BeszelContainer>>(
+    const raw = await this.fetchJson<unknown>(
       "/api/collections/containers/records?perPage=500&sort=system%2Cname",
     );
-    return data.items;
+    return coercePocketBaseList(raw, coerceContainer).items;
   }
 
   // -------------------------------------------------------------------------
@@ -125,14 +126,20 @@ export class BeszelClient {
       password: this.password,
     });
 
-    const data = await this.request<AuthResponse>(
+    const raw = await this.request<unknown>(
       "POST",
       "/api/collections/users/auth-with-password",
       body,
       null, // no auth token yet
     );
 
-    this.token = data.token;
+    const auth = coerceAuthResponse(raw);
+    if (auth === null) {
+      const err = new Error("Auth response missing valid token");
+      (err as NodeJS.ErrnoException).code = "INVALID_AUTH_RESPONSE";
+      throw err;
+    }
+    this.token = auth.token;
     this.tokenTime = Date.now();
   }
 

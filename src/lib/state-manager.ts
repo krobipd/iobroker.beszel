@@ -22,10 +22,15 @@ export class StateManager {
   /**
    * Sanitize a name to a valid ioBroker state ID segment (see adapter.FORBIDDEN_CHARS).
    * Lowercase, replace non-alphanumeric with _, max 50 chars, trim underscores.
+   * Non-string input is rejected with an empty string so one bad record
+   * cannot crash a poll.
    *
    * @param name Raw name to sanitize
    */
-  public sanitize(name: string): string {
+  public sanitize(name: unknown): string {
+    if (typeof name !== "string") {
+      return "";
+    }
     return name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
@@ -71,7 +76,14 @@ export class StateManager {
     containers: BeszelContainer[],
     config: AdapterConfig,
   ): Promise<void> {
-    const sysId = `systems.${this.sanitize(system.name)}`;
+    const safeName = this.sanitize(system.name);
+    if (safeName.length === 0) {
+      this.adapter.log.warn(
+        `Skipping system with unusable name: ${JSON.stringify(system.name)}`,
+      );
+      return;
+    }
+    const sysId = `systems.${safeName}`;
 
     // Create/update device object with online indicator
     await this.adapter.extendObjectAsync(sysId, {
@@ -688,6 +700,9 @@ export class StateManager {
 
     for (const container of sysContainers) {
       const cId = this.sanitize(container.name);
+      if (cId.length === 0) {
+        continue;
+      }
       await this.ensureChannel(`${sysId}.containers.${cId}`, container.name);
       await this.createAndSetState(
         `${sysId}.containers.${cId}.status`,

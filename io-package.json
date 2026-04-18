@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "news": {
+      "0.3.2": {
+        "en": "API boundary hardening: every field from the Beszel Hub goes through a type-coercion layer so API drift (NaN, Infinity, missing fields, wrong types) cannot corrupt states",
+        "de": "API-Boundary-Härtung: jedes Feld vom Beszel Hub wird durch eine Typ-Coercion-Schicht geführt, damit API-Drift (NaN, Infinity, fehlende Felder, falsche Typen) keine States verderben kann",
+        "ru": "Укрепление границ API: каждое поле из Beszel Hub проходит через слой приведения типов, чтобы дрейф API (NaN, Infinity, отсутствующие поля, неверные типы) не испортил состояния",
+        "pt": "Endurecimento da fronteira API: cada campo do Beszel Hub passa por uma camada de coerção de tipos para que o drift API (NaN, Infinity, campos ausentes, tipos errados) não corrompa estados",
+        "nl": "API-grens verharding: elk veld van de Beszel Hub gaat door een type-coercie-laag, zodat API-drift (NaN, Infinity, ontbrekende velden, verkeerde typen) states niet kan beschadigen",
+        "fr": "Durcissement de la frontière API : chaque champ du Beszel Hub passe par une couche de coercition de types pour que la dérive API (NaN, Infinity, champs manquants, mauvais types) ne corrompe pas les états",
+        "it": "Rafforzamento del confine API: ogni campo dall'hub Beszel passa attraverso un livello di coercizione di tipo affinché il drift API (NaN, Infinity, campi mancanti, tipi errati) non corrompa gli stati",
+        "es": "Endurecimiento de la frontera API: cada campo del Beszel Hub pasa por una capa de coerción de tipos para que la deriva API (NaN, Infinity, campos faltantes, tipos incorrectos) no corrompa estados",
+        "pl": "Wzmocnienie granicy API: każde pole z Beszel Hub przechodzi przez warstwę koercji typów, aby dryf API (NaN, Infinity, brakujące pola, złe typy) nie uszkodził stanów",
+        "uk": "Укріплення межі API: кожне поле з Beszel Hub проходить через шар приведення типів, щоб дрейф API (NaN, Infinity, відсутні поля, неправильні типи) не псував стани",
+        "zh-cn": "API边界加固：来自 Beszel Hub 的每个字段都经过类型强制转换层，防止 API 漂移（NaN、Infinity、缺失字段、错误类型）破坏状态"
+      },
       "0.3.1": {
         "en": "Fix response stream error handling, isolate per-system poll failures, harden onMessage error handling",
         "de": "Response-Stream-Fehlerbehandlung gefixt, per-System Poll-Fehler isoliert, onMessage-Fehlerbehandlung gehärtet",
@@ -80,19 +93,6 @@
         "pl": "Czystsze komunikaty dziennika, usunięto zbędny prefiks nazwy adaptera",
         "uk": "Чистіші повідомлення журналу, видалено зайвий префікс назви адаптера",
         "zh-cn": "更清洁的日志消息，删除冗余的适配器名称前缀"
-      },
-      "0.2.3": {
-        "en": "Remove redundant scripts and unused devDependencies, compress documentation",
-        "de": "Redundante Scripts und ungenutzte DevDependencies entfernt, Dokumentation komprimiert",
-        "ru": "Удалены избыточные скрипты и неиспользуемые devDependencies, документация сжата",
-        "pt": "Scripts redundantes e devDependencies não utilizadas removidos, documentação comprimida",
-        "nl": "Redundante scripts en ongebruikte devDependencies verwijderd, documentatie gecomprimeerd",
-        "fr": "Scripts redondants et devDependencies inutilisées supprimés, documentation compressée",
-        "it": "Script ridondanti e devDependencies inutilizzate rimossi, documentazione compressa",
-        "es": "Scripts redundantes y devDependencies no utilizadas eliminados, documentación comprimida",
-        "pl": "Usunięto zbędne skrypty i nieużywane devDependencies, skompresowano dokumentację",
-        "uk": "Видалено зайві скрипти та невикористані devDependencies, документацію стиснуто",
-        "zh-cn": "删除冗余脚本和未使用的开发依赖，压缩文档"
       }
     },
     "titleLang": {
