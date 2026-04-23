@@ -171,8 +171,7 @@ beszel.0.
 ---
 
 ## Changelog
-
-### **WORK IN PROGRESS**
+### 0.3.4 (2026-04-23)
 - Separate test-build output (`build-test/`) from production `build/`, so `npm test` no longer risks leaving duplicated `build/src` + `build/test` trees in the published package.
 - Declare `systems` folder as instance object so the parent exists before per-system devices appear.
 - Wrap async `onReady` and `onMessage` with `.catch()` to prevent unhandled promise rejections from SIGKILLing the adapter.
@@ -197,22 +196,6 @@ beszel.0.
 - Automatic migration removes legacy flat state paths on first start
 - Fix: read-only percentage states use correct `value` role instead of `level`
 - Complete state tree documentation in README
-
-### 0.2.7 (2026-04-12)
-- Fix README state tree (add 8 missing default-on states), add `no-floating-promises` lint rule, remove redundant CI checkout
-
-### 0.2.6 (2026-04-08)
-- Use `node:` prefix for built-in modules (http, https, url)
-
-### 0.2.5 (2026-04-08)
-- Restore standard GitHub-based tests, remove CHANGELOG.md, add FORBIDDEN_CHARS reference
-
-### 0.2.4 (2026-04-05)
-- Cleaner log messages, remove redundant adapter name prefix
-
-Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
-
----
 
 ## Support
 

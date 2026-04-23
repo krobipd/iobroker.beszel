@@ -1,4 +1,19 @@
 # Older Changes
+## 0.2.7 (2026-04-12)
+- Fix README state tree (add 8 missing default-on states), add `no-floating-promises` lint rule, remove redundant CI checkout
+
+## 0.2.6 (2026-04-08)
+- Use `node:` prefix for built-in modules (http, https, url)
+
+## 0.2.5 (2026-04-08)
+- Restore standard GitHub-based tests, remove CHANGELOG.md, add FORBIDDEN_CHARS reference
+
+## 0.2.4 (2026-04-05)
+- Cleaner log messages, remove redundant adapter name prefix
+
+Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
+
+---
 
 ## 0.2.3 (2026-04-05)
 - Remove redundant scripts, unused devDependencies, compress documentation

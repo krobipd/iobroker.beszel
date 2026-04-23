@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "news": {
+      "0.3.4": {
+        "en": "Proactive sync with parcelapp v0.2.14 learnings: tsconfig.test.json emits to build-test/ (prevents build/src + build/test duplicates), declare systems folder as instance object (11 languages), wrap async onReady and onMessage with .catch(), drop redundant dynamic info/info.connection setup in onReady",
+        "de": "Proaktive Übernahme der parcelapp v0.2.14 Learnings: tsconfig.test.json schreibt nach build-test/ (verhindert build/src + build/test Duplikate), systems-Ordner als instance object deklariert (11 Sprachen), async onReady und onMessage mit .catch() gehärtet, redundantes info/info.connection Setup in onReady entfernt",
+        "ru": "Проактивная синхронизация с parcelapp v0.2.14: tsconfig.test.json собирает в build-test/ (предотвращает дубли build/src + build/test), папка systems объявлена как instance object (11 языков), async onReady и onMessage обёрнуты в .catch(), убрана избыточная динамическая инициализация info/info.connection",
+        "pt": "Sincronização proativa com parcelapp v0.2.14: tsconfig.test.json emite para build-test/ (evita duplicados build/src + build/test), pasta systems declarada como instance object (11 línguas), onReady e onMessage assíncronos envolvidos em .catch(), removido setup dinâmico redundante de info/info.connection",
+        "nl": "Proactieve synchronisatie met parcelapp v0.2.14: tsconfig.test.json schrijft naar build-test/ (voorkomt build/src + build/test duplicaten), systems-folder als instance object (11 talen), async onReady en onMessage omhuld met .catch(), overbodige dynamische info/info.connection setup uit onReady verwijderd",
+        "fr": "Synchronisation proactive avec parcelapp v0.2.14 : tsconfig.test.json émet vers build-test/ (évite les doublons build/src + build/test), dossier systems déclaré comme instance object (11 langues), onReady et onMessage asynchrones protégés par .catch(), suppression du setup dynamique redondant de info/info.connection",
+        "it": "Sincronizzazione proattiva con parcelapp v0.2.14: tsconfig.test.json emette in build-test/ (previene duplicati build/src + build/test), cartella systems dichiarata come instance object (11 lingue), onReady e onMessage asincroni protetti con .catch(), rimosso setup dinamico ridondante di info/info.connection",
+        "es": "Sincronización proactiva con parcelapp v0.2.14: tsconfig.test.json escribe en build-test/ (evita duplicados build/src + build/test), carpeta systems declarada como instance object (11 idiomas), onReady y onMessage asíncronos protegidos con .catch(), eliminado setup dinámico redundante de info/info.connection",
+        "pl": "Proaktywna synchronizacja z parcelapp v0.2.14: tsconfig.test.json zapisuje do build-test/ (zapobiega duplikatom build/src + build/test), folder systems zadeklarowany jako instance object (11 języków), async onReady i onMessage zabezpieczone .catch(), usunięto zbędne dynamiczne ustawienie info/info.connection",
+        "uk": "Проактивна синхронізація з parcelapp v0.2.14: tsconfig.test.json збирає у build-test/ (запобігає дублям build/src + build/test), папка systems оголошена як instance object (11 мов), async onReady та onMessage захищено .catch(), прибрано надлишкове динамічне налаштування info/info.connection",
+        "zh-cn": "主动采纳 parcelapp v0.2.14 经验：tsconfig.test.json 输出到 build-test/（避免 build/src + build/test 重复），将 systems 文件夹声明为 instance object（11 种语言），异步 onReady 和 onMessage 使用 .catch() 加固，移除 onReady 中冗余的 info/info.connection 动态设置"
+      },
       "0.3.3": {
         "en": "Latest-repo review compliance: set common.messagebox=true because the onMessage handler is used for the admin-UI Check Connection button.",
         "de": "Latest-Repo-Review-Compliance: common.messagebox=true gesetzt, weil der onMessage-Handler für den Check-Connection-Button im Admin-UI genutzt wird.",
@@ -80,19 +93,6 @@
         "pl": "Prefiks node: dla wbudowanych modułów (S5043)",
         "uk": "Префікс node: для вбудованих модулів (S5043)",
         "zh-cn": "为内置模块使用node:前缀 (S5043)"
-      },
-      "0.2.5": {
-        "en": "Restore standard GitHub-based tests, remove CHANGELOG.md, add FORBIDDEN_CHARS reference, fix Dependabot cooldown",
-        "de": "Standard GitHub-Tests wiederhergestellt, CHANGELOG.md entfernt, FORBIDDEN_CHARS-Referenz, Dependabot-Cooldown",
-        "ru": "Восстановлены стандартные тесты GitHub, удалён CHANGELOG.md, добавлена ссылка FORBIDDEN_CHARS, cooldown Dependabot",
-        "pt": "Restaurados testes padrão GitHub, removido CHANGELOG.md, referência FORBIDDEN_CHARS, cooldown Dependabot",
-        "nl": "Standaard GitHub-tests hersteld, CHANGELOG.md verwijderd, FORBIDDEN_CHARS-referentie, Dependabot-cooldown",
-        "fr": "Tests GitHub standard restaurés, CHANGELOG.md supprimé, référence FORBIDDEN_CHARS, cooldown Dependabot",
-        "it": "Ripristinati test GitHub standard, rimosso CHANGELOG.md, riferimento FORBIDDEN_CHARS, cooldown Dependabot",
-        "es": "Restauradas pruebas estándar GitHub, eliminado CHANGELOG.md, referencia FORBIDDEN_CHARS, cooldown Dependabot",
-        "pl": "Przywrócono standardowe testy GitHub, usunięto CHANGELOG.md, referencja FORBIDDEN_CHARS, cooldown Dependabot",
-        "uk": "Відновлено стандартні тести GitHub, видалено CHANGELOG.md, посилання FORBIDDEN_CHARS, cooldown Dependabot",
-        "zh-cn": "恢复标准GitHub测试，删除CHANGELOG.md，添加FORBIDDEN_CHARS引用，修复Dependabot冷却"
       }
     },
     "titleLang": {
