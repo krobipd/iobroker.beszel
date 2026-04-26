@@ -1,5 +1,8 @@
 # Older Changes
 
+## 0.2.6 (2026-04-08)
+- `node:` prefix used for built-in modules (http, https, url).
+
 ## 0.2.5 (2026-04-08)
 - Standard GitHub-based tests restored, redundant `CHANGELOG.md` removed, FORBIDDEN_CHARS reference added.
 
