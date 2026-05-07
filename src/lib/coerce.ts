@@ -65,6 +65,39 @@ export function coerceBoolean(value: unknown): boolean | null {
 }
 
 /**
+ * Extract a log-friendly message from a thrown / rejected value. Centralizes the
+ * `err instanceof Error ? err.message : String(err)` pattern that otherwise
+ * gets repeated at every catch-site. Plain objects are JSON-stringified so a
+ * `[object Object]` log is avoided when callers throw bag-of-fields.
+ *
+ * @param err Caught value of unknown shape (Error, string, undefined, ...).
+ */
+export function errText(err: unknown): string {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  if (err === null) {
+    return "null";
+  }
+  if (err === undefined) {
+    return "undefined";
+  }
+  if (typeof err === "string") {
+    return err;
+  }
+  if (typeof err === "number" || typeof err === "boolean" || typeof err === "bigint") {
+    return String(err);
+  }
+  // Plain objects + symbols would otherwise stringify to "[object Object]" / fail.
+  // Prefer JSON for the common case so the log is at least diagnosable.
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return Object.prototype.toString.call(err);
+  }
+}
+
+/**
  * Coerce into a plain object (non-null, non-array), or null.
  *
  * @param value Unknown value from external API

@@ -1383,4 +1383,147 @@ describe("StateManager", () => {
             ).to.be.undefined;
         });
     });
+
+    // -----------------------------------------------------------------------
+    // Multi-language: state and channel names use translation objects
+    // -----------------------------------------------------------------------
+
+    describe("translation objects (Multi-Language)", () => {
+        it("info channel common.name is a translation object", async () => {
+            await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
+            const obj = adapter.objects.get("systems.my_server.info");
+            const name = obj?.common.name as Record<string, string>;
+            expect(name).to.be.an("object");
+            expect(name.en).to.equal("Info");
+            expect(name.de).to.equal("Info");
+            expect(name.ru).to.equal("Информация");
+        });
+
+        it("online state common.name is a translation object", async () => {
+            await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
+            const obj = adapter.objects.get("systems.my_server.info.online");
+            const name = obj?.common.name as Record<string, string>;
+            expect(name).to.be.an("object");
+            expect(name.en).to.equal("Online");
+            expect(name["zh-cn"]).to.equal("在线");
+        });
+
+        it("CPU channel + usage state common.name are translation objects", async () => {
+            await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
+            const ch = adapter.objects.get("systems.my_server.cpu");
+            const st = adapter.objects.get("systems.my_server.cpu.usage");
+            const chName = ch?.common.name as Record<string, string>;
+            const stName = st?.common.name as Record<string, string>;
+            expect(chName.en).to.equal("CPU");
+            expect(chName.de).to.equal("CPU");
+            expect(stName.en).to.equal("CPU Usage");
+            expect(stName.de).to.equal("CPU-Auslastung");
+        });
+
+        it("memory state common.name covers all 11 languages", async () => {
+            await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
+            const obj = adapter.objects.get("systems.my_server.memory.percent");
+            const name = obj?.common.name as Record<string, string>;
+            for (const lang of [
+                "en",
+                "de",
+                "ru",
+                "pt",
+                "nl",
+                "fr",
+                "it",
+                "es",
+                "pl",
+                "uk",
+                "zh-cn",
+            ]) {
+                expect(name[lang], `missing ${lang}`).to.be.a("string").and.not.empty;
+            }
+        });
+
+        it("device common.name keeps the raw system name from the API", async () => {
+            await manager.updateSystem(testSystem, undefined, [], allMetricsConfig());
+            const dev = adapter.objects.get("systems.my_server");
+            expect(dev?.common.name).to.equal("My Server");
+        });
+
+        it("temperature sensor child uses the raw vendor key (not translated)", async () => {
+            const stats: SystemStats = { t: { "Core 0": 45 } };
+            await manager.updateSystem(testSystem, stats, [], allMetricsConfig());
+            const obj = adapter.objects.get(
+                "systems.my_server.temperature.sensors.core_0",
+            );
+            // Sensor names are agent-defined, kept as plain string
+            expect(obj?.common.name).to.equal("Core 0");
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // createdIds cache: avoid repeated setObjectNotExistsAsync per poll
+    // -----------------------------------------------------------------------
+
+    describe("createdIds cache", () => {
+        it("does not call setObjectNotExistsAsync again on a second poll", async () => {
+            let createCalls = 0;
+            const original = adapter.setObjectNotExistsAsync;
+            adapter.setObjectNotExistsAsync = async (id, obj): Promise<void> => {
+                createCalls++;
+                return original(id, obj);
+            };
+
+            await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
+            const firstCalls = createCalls;
+            expect(firstCalls).to.be.greaterThan(0);
+
+            await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
+            expect(createCalls).to.equal(firstCalls);
+        });
+
+        it("re-creates objects after cleanupSystems removes them", async () => {
+            await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
+            await manager.cleanupSystems([]); // remove my_server
+
+            let createCalls = 0;
+            const original = adapter.setObjectNotExistsAsync;
+            adapter.setObjectNotExistsAsync = async (id, obj): Promise<void> => {
+                createCalls++;
+                return original(id, obj);
+            };
+
+            await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
+            expect(createCalls).to.be.greaterThan(0);
+        });
+
+        it("re-creates objects after cleanupMetrics deletes them", async () => {
+            await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
+            // Disable cpu metrics → cleanupMetrics deletes systems.my_server.cpu.usage
+            await manager.cleanupMetrics(
+                "my_server",
+                allMetricsConfig({ metrics_cpu: false }),
+            );
+
+            let createCalls = 0;
+            const original = adapter.setObjectNotExistsAsync;
+            adapter.setObjectNotExistsAsync = async (id, obj): Promise<void> => {
+                createCalls++;
+                return original(id, obj);
+            };
+
+            await manager.updateSystem(testSystem, testStats, [], allMetricsConfig());
+            // cpu.usage was deleted from cache, so it gets re-created on next poll
+            const recreated = [...adapter.objects.keys()].filter(
+                k => k === "systems.my_server.cpu.usage",
+            );
+            expect(recreated).to.have.lengthOf(1);
+            expect(createCalls).to.be.greaterThan(0);
+        });
+
+        it("still updates state values on subsequent polls (cache only skips object creation)", async () => {
+            await manager.updateSystem(testSystem, { cpu: 10 }, [], allMetricsConfig());
+            expect(adapter.states.get("systems.my_server.cpu.usage")?.val).to.equal(10);
+
+            await manager.updateSystem(testSystem, { cpu: 80 }, [], allMetricsConfig());
+            expect(adapter.states.get("systems.my_server.cpu.usage")?.val).to.equal(80);
+        });
+    });
 });

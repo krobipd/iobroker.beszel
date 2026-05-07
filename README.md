@@ -1,7 +1,7 @@
 # ioBroker.beszel
 
 [![npm version](https://img.shields.io/npm/v/iobroker.beszel)](https://www.npmjs.com/package/iobroker.beszel)
-![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
+![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![npm downloads](https://img.shields.io/npm/dt/iobroker.beszel)](https://www.npmjs.com/package/iobroker.beszel)
@@ -29,9 +29,9 @@ Connects to a [Beszel](https://github.com/henrygd/beszel) Hub and exposes server
 
 ## Requirements
 
-- **Node.js >= 20**
+- **Node.js >= 22**
 - **ioBroker js-controller >= 7.0.7**
-- **ioBroker Admin >= 7.7.22**
+- **ioBroker Admin >= 7.8.23**
 - A running [Beszel Hub](https://github.com/henrygd/beszel) with at least one registered system
 
 ---
@@ -171,6 +171,11 @@ beszel.0.
 ---
 
 ## Changelog
+### **WORK IN PROGRESS**
+- State names and log messages localized in 11 ioBroker languages, following the system setting.
+- Object cache cuts js-controller calls per poll cycle.
+- Baseline: Node 22, Admin 7.8.23 (ioBroker May-2026 stable).
+
 ### 0.3.10 (2026-05-01)
 - Documentation: rewrote release notes for v0.3.3–v0.3.9 in user-friendly style across all languages.
 

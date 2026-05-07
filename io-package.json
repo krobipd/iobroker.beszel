@@ -3,6 +3,19 @@
     "name": "beszel",
     "version": "0.3.10",
     "news": {
+      "NEXT": {
+        "en": "State names and log messages localized in 11 ioBroker languages, following the system setting. Object cache cuts js-controller calls per poll. Baseline: Node 22, Admin 7.8.23.",
+        "de": "Datenpunkt-Namen und Log-Meldungen in 11 ioBroker-Sprachen, folgen der Systemsprache. Objekt-Cache spart js-controller-Calls pro Poll. Basis: Node 22, Admin 7.8.23.",
+        "ru": "Имена датчиков и сообщения журнала на 11 языках ioBroker, следуют системному языку. Кэш объектов сокращает вызовы js-controller за опрос. База: Node 22, Admin 7.8.23.",
+        "pt": "Nomes de datapoints e logs em 11 idiomas ioBroker, seguindo o idioma do sistema. Cache de objetos reduz chamadas ao js-controller por polling. Base: Node 22, Admin 7.8.23.",
+        "nl": "Datapunt-namen en logberichten in 11 ioBroker-talen, volgen de systeemtaal. Object-cache bespaart js-controller-aanroepen per poll. Basis: Node 22, Admin 7.8.23.",
+        "fr": "Noms de datapoints et logs traduits en 11 langues ioBroker, suivent la langue système. Le cache d'objets réduit les appels au js-controller par interrogation. Base : Node 22, Admin 7.8.23.",
+        "it": "Nomi dei datapoint e log in 11 lingue ioBroker, seguono la lingua di sistema. La cache degli oggetti riduce le chiamate al js-controller per polling. Base: Node 22, Admin 7.8.23.",
+        "es": "Nombres de datapoints y logs en 11 idiomas ioBroker, siguen el idioma del sistema. La caché de objetos reduce llamadas al js-controller por consulta. Base: Node 22, Admin 7.8.23.",
+        "pl": "Nazwy datapointów i logi w 11 językach ioBroker, podążają za językiem systemu. Cache obiektów ogranicza wywołania js-controller na odpyt. Baza: Node 22, Admin 7.8.23.",
+        "uk": "Назви датапойнтів та логи 11 мовами ioBroker, слідують за системною мовою. Кеш об'єктів зменшує виклики js-controller на опитування. База: Node 22, Admin 7.8.23.",
+        "zh-cn": "数据点名称和日志现支持 11 种 ioBroker 语言，跟随系统语言。对象缓存可减少每次轮询的 js-controller 调用。基线：Node 22，Admin 7.8.23。"
+      },
       "0.3.10": {
         "en": "Documentation: rewrote release notes in user-friendly style across all languages.",
         "de": "Dokumentation: Release-Notes in alle Sprachen User-orientiert neu geschrieben.",
@@ -80,19 +93,6 @@
         "pl": "Ochrona przed crashem: handlery błędów process-level.",
         "uk": "Захист від збоїв: process-level обробники помилок.",
         "zh-cn": "崩溃防护：process-level 错误处理器。"
-      },
-      "0.3.4": {
-        "en": "Internal hardening. No user-facing changes.",
-        "de": "Interne Härtung. Keine User-sichtbaren Änderungen.",
-        "ru": "Внутреннее усиление. Без видимых изменений для пользователя.",
-        "pt": "Endurecimento interno. Sem alterações visíveis para o usuário.",
-        "nl": "Interne verharding. Geen wijzigingen voor de gebruiker.",
-        "fr": "Durcissement interne. Aucune modification visible pour l'utilisateur.",
-        "it": "Hardening interno. Nessuna modifica visibile all'utente.",
-        "es": "Endurecimiento interno. Sin cambios visibles para el usuario.",
-        "pl": "Wewnętrzne wzmocnienie. Brak zmian widocznych dla użytkownika.",
-        "uk": "Внутрішнє зміцнення. Без помітних для користувача змін.",
-        "zh-cn": "内部加固。对用户无可见变化。"
       }
     },
     "titleLang": {
@@ -161,7 +161,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=7.7.22"
+        "admin": ">=7.8.23"
       }
     ]
   },

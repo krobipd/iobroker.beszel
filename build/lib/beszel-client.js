@@ -67,10 +67,7 @@ class BeszelClient {
       await this.authenticate();
       return { success: true, message: "Connected successfully" };
     } catch (err) {
-      return {
-        success: false,
-        message: err instanceof Error ? err.message : String(err)
-      };
+      return { success: false, message: (0, import_coerce.errText)(err) };
     }
   }
   /** Fetch all systems */

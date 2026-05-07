@@ -7,6 +7,7 @@ import {
   coercePocketBaseList,
   coerceSystem,
   coerceSystemStatsRecord,
+  errText,
 } from "./coerce";
 import type { BeszelContainer, BeszelSystem, SystemStats } from "./types";
 
@@ -55,10 +56,7 @@ export class BeszelClient {
       await this.authenticate();
       return { success: true, message: "Connected successfully" };
     } catch (err) {
-      return {
-        success: false,
-        message: err instanceof Error ? err.message : String(err),
-      };
+      return { success: false, message: errText(err) };
     }
   }
 

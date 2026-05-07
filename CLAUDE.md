@@ -6,21 +6,23 @@
 
 **ioBroker Beszel Monitor** — Verbindet sich mit Beszel Hub (PocketBase) für Server-Monitoring.
 
-- **Version:** 0.3.8 (in progress — Cleanup-Welle analog parcelapp v0.3.0: format/format:check npm-scripts ergänzt, .github/dependabot.yml aus Master mit ignore-Block für `actions/checkout`+`actions/setup-node` Major-Bumps, `repochecker-version-gate` Job-Block von M1000-Logik auf sources-dist-stable Master-Snippet umgestellt, CLAUDE.md-Tests-Sektion + Befehle auf v0.3.7-Stand aktualisiert)
+- **Version:** 0.4.0 (in progress — Multi-Language-Welle analog hassemu v1.28.0 / govee v2.6.0: `lib/i18n-logs.ts` mit 14 LOG_STRINGS × 11 Sprachen + tLog Helper, `lib/i18n-states.ts` mit 52 STATE_NAMES × 11 Sprachen + tName Helper. Alle State-Common-Factories auf `ioBroker.StringOrTranslated`, alle hardcoded EN-Strings in state-manager.ts via `tName('key')` durch Translation-Objects ersetzt. Lokaler `errText` aus main.ts in `lib/coerce.ts` zentralisiert, 4 Inline-`err instanceof Error`-Patterns durch `errText`-Aufrufe ersetzt. Neuer `createdIds`-Set Cache in StateManager spart pro Poll setObjectNotExistsAsync-Roundtrips. Baseline auf Node 22 + Admin >=7.8.23 + @types/node ^22.x + @tsconfig/node22, Deploy-Step PRE-EMPTIVE auf Node 24 (parcelapp v0.4.0 MODULE_NOT_FOUND-Workaround))
 - **GitHub:** https://github.com/krobipd/ioBroker.beszel
 - **npm:** https://www.npmjs.com/package/iobroker.beszel
 - **Repository PR:** ioBroker/ioBroker.repositories#5787
 - **Runtime-Deps:** nur `@iobroker/adapter-core` (HTTP via Node.js built-in)
 - **Test-Setup:** offizieller ioBroker.example/TypeScript-Standard — Tests unter `src/lib/*.test.ts` direkt mit `ts-node/register`, kein separater Build (siehe globales `reference_iobroker_test_setup_standard`)
-- **`@types/node` an `engines.node`-Min gekoppelt:** `^20.x` weil `engines.node: ">=20"`. Dependabot ignoriert Major-Bumps
+- **`@types/node` an `engines.node`-Min gekoppelt:** `^22.x` weil `engines.node: ">=22"`. Dependabot ignoriert Major-Bumps
 
 ## Architektur
 
 ```
 src/main.ts              → Adapter (Lifecycle, Polling, Message-Handler)
 src/lib/beszel-client.ts → HTTP Client (Auth, Systems, Stats, Containers)
-src/lib/coerce.ts        → Boundary-Validator (NaN/Infinity/Typ-Drift)
-src/lib/state-manager.ts → ioBroker States erstellen/updaten/cleanup
+src/lib/coerce.ts        → Boundary-Validator (NaN/Infinity/Typ-Drift) + errText-Helper
+src/lib/state-manager.ts → ioBroker States erstellen/updaten/cleanup, createdIds-Cache
+src/lib/i18n-logs.ts     → 14 LOG_STRINGS × 11 Sprachen + tLog(lang, key, params)
+src/lib/i18n-states.ts   → 52 STATE_NAMES × 11 Sprachen + tName(key) Translation-Object
 src/lib/types.ts         → TypeScript Interfaces (API + Config)
 ```
 
@@ -43,14 +45,15 @@ src/lib/types.ts         → TypeScript Interfaces (API + Config)
 
 20+ konfigurierbare Metriken (global für alle Systeme). Standard-on: uptime, cpu, loadAvg, memory, disk, diskSpeed, network, temperature. Alle anderen default off.
 
-## Tests (235 unit + 57 package + 1 integration)
+## Tests (261 unit + 57 package + 1 integration)
 
 Tests leben seit v0.3.7 neben dem Source als `src/lib/*.test.ts` und laufen direkt via `ts-node/register` (offizieller `ioBroker.example/TypeScript`-Standard).
 
 ```
-src/lib/coerce.test.ts         → Boundary-Validator (Primitive + Beszel-Shapes)
+src/lib/coerce.test.ts         → Boundary-Validator (Primitive + Beszel-Shapes) + errText
+src/lib/i18n-logs.test.ts      → tLog Lang-Lookup + Token-Substitution + 11-Sprachen-Coverage
 src/lib/beszel-client.test.ts  → API Client (Auth, Token, Errors, Responses, API-Drift)
-src/lib/state-manager.test.ts  → StateManager (Sanitize, System, Stats, GPU, FS, Containers, Cleanup, Migration, Defensive Boundaries)
+src/lib/state-manager.test.ts  → StateManager + Translation-Objects + createdIds-Cache
 test/package.js                → @iobroker/testing Package-Tests
 test/integration.js            → @iobroker/testing Integration-Tests
 ```
@@ -61,14 +64,13 @@ Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Call
 
 | Version | Highlights |
 |---------|------------|
-| 0.3.8 | Cleanup-Welle analog parcelapp v0.3.0: `format` + `format:check` npm-scripts ergänzt, `.github/dependabot.yml` aus Master mit ignore-Block für `actions/checkout` + `actions/setup-node` Major-Bumps, `repochecker-version-gate` Job-Block von M1000-Logik auf sources-dist-stable Master-Snippet umgestellt, CLAUDE.md Tests-Sektion + Befehle auf v0.3.7-Stand aktualisiert. |
-| 0.3.7 | Audit-Cleanup gegen ioBroker.example/TypeScript-Vollstandard: Test-Setup auf `src/lib/*.test.ts` + ts-node, `tsconfig.test.json` + `build-test/` raus, `@types/node` von `^25.6.0` auf `^20.19.24` (engines.node >=20), dependabot ignore-Block für Major-Bumps von `@types/node`+`typescript`+`eslint`+`actions/checkout`+`actions/setup-node`, `nyc`-Config + `coverage`-Script, `prettier.config.mjs` mit Project-Style-Override, `auto-merge.yml` raus (verwaist), `.js`-Imports in src/ entfernt (bare-Names konsistent) |
+| 0.4.0 | Multi-Language-Welle analog hassemu v1.28.0 / govee v2.6.0: `lib/i18n-logs.ts` (14 LOG_STRINGS × 11 Sprachen + tLog Helper), `lib/i18n-states.ts` (52 STATE_NAMES × 11 Sprachen + tName Helper). Alle State-Common-Factories auf `ioBroker.StringOrTranslated`, alle hardcoded EN-Strings via `tName('key')`. Lokaler `errText` aus main.ts in `lib/coerce.ts` zentralisiert (4 Inline-Patterns durch `errText`-Aufrufe ersetzt). `createdIds`-Set Cache spart pro Poll setObjectNotExistsAsync-Roundtrips. Baseline auf Node 22 + Admin >=7.8.23 + @types/node ^22.x + @tsconfig/node22, Deploy-Step PRE-EMPTIVE auf Node 24 |
+| 0.3.10 | Doku-Welle: Release-Notes für v0.3.3–v0.3.9 in user-friendly Stil über alle 11 Sprachen umgeschrieben |
+| 0.3.9 | Doku-Cleanup, keine Code-Änderungen |
+| 0.3.8 | Cleanup-Welle analog parcelapp v0.3.0: `format` + `format:check` npm-scripts, dependabot.yml ignore-Block, repochecker-version-gate Master-Snippet |
+| 0.3.7 | Audit-Cleanup gegen ioBroker.example/TypeScript-Vollstandard: Test-Setup auf `src/lib/*.test.ts` + ts-node, dependabot ignore-Block für Major-Bumps |
 | 0.3.6 | Hotfix js-controller-Min auf `>=6.0.11` (Repochecker-recommended), war versehentlich `>=7.0.23` |
-| 0.3.5 | Process-level `unhandledRejection`/`uncaughtException`-Handler. `manual-review`-Plugin raus. Konsistenz-Cleanup |
-| 0.3.4 | tsconfig.test.json → outDir `./build-test` (später durch v0.3.7 vollständig ersetzt), `systems` als instanceObject, async-handler `.catch()` für onReady + onMessage |
-| 0.3.3 | Latest-repo review compliance: `common.messagebox=true` |
-| 0.3.2 | API-Boundary-Härtung: coerce.ts mit typed coercers + 105 Drift-Tests |
-| 0.3.1 | Error-Handling: res.on("error"), per-system Poll-Isolation, onMessage try/catch |
+| 0.3.5 | Process-level `unhandledRejection`/`uncaughtException`-Handler. `manual-review`-Plugin raus |
 
 ## Befehle
 

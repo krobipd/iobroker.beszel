@@ -31,7 +31,8 @@ __export(coerce_exports, {
   coerceString: () => coerceString,
   coerceSystem: () => coerceSystem,
   coerceSystemStats: () => coerceSystemStats,
-  coerceSystemStatsRecord: () => coerceSystemStatsRecord
+  coerceSystemStatsRecord: () => coerceSystemStatsRecord,
+  errText: () => errText
 });
 module.exports = __toCommonJS(coerce_exports);
 const VALID_SYSTEM_STATUS = ["up", "down", "paused", "pending"];
@@ -53,6 +54,28 @@ function coerceString(value, maxLength = 1024) {
 }
 function coerceBoolean(value) {
   return typeof value === "boolean" ? value : null;
+}
+function errText(err) {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  if (err === null) {
+    return "null";
+  }
+  if (err === void 0) {
+    return "undefined";
+  }
+  if (typeof err === "string") {
+    return err;
+  }
+  if (typeof err === "number" || typeof err === "boolean" || typeof err === "bigint") {
+    return String(err);
+  }
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return Object.prototype.toString.call(err);
+  }
 }
 function coerceObject(value) {
   if (value !== null && typeof value === "object" && !Array.isArray(value)) {
@@ -422,6 +445,7 @@ function coerceAuthResponse(value) {
   coerceString,
   coerceSystem,
   coerceSystemStats,
-  coerceSystemStatsRecord
+  coerceSystemStatsRecord,
+  errText
 });
 //# sourceMappingURL=coerce.js.map
