@@ -171,7 +171,7 @@ beszel.0.
 ---
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.4.1 (2026-05-07)
 - Restored the blank line between the changelog footer and the Support section (release-script swallowed it in v0.4.0).
 
 ### 0.4.0 (2026-05-07)
@@ -186,9 +186,6 @@ beszel.0.
 - Documentation cleanup. No code changes.
 
 ### 0.3.8 (2026-04-30)
-- Internal cleanup. No user-facing changes.
-
-### 0.3.7 (2026-04-28)
 - Internal cleanup. No user-facing changes.
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).

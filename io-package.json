@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "news": {
-      "NEXT": {
+      "0.4.1": {
         "en": "Restored the blank line between the changelog footer and the Support section (release-script swallowed it in v0.4.0).",
         "de": "Leerzeile zwischen Changelog-Footer und Support-Abschnitt wiederhergestellt (release-script hatte sie in v0.4.0 verschluckt).",
         "ru": "Восстановлена пустая строка между футером changelog и разделом Support (release-script удалил её в v0.4.0).",
