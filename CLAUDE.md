@@ -6,7 +6,7 @@
 
 **ioBroker Beszel Monitor** — Verbindet sich mit Beszel Hub (PocketBase) für Server-Monitoring.
 
-- **Version:** 0.4.0 (in progress — Multi-Language-Welle analog hassemu v1.28.0 / govee v2.6.0: `lib/i18n-logs.ts` mit 14 LOG_STRINGS × 11 Sprachen + tLog Helper, `lib/i18n-states.ts` mit 52 STATE_NAMES × 11 Sprachen + tName Helper. Alle State-Common-Factories auf `ioBroker.StringOrTranslated`, alle hardcoded EN-Strings in state-manager.ts via `tName('key')` durch Translation-Objects ersetzt. Lokaler `errText` aus main.ts in `lib/coerce.ts` zentralisiert, 4 Inline-`err instanceof Error`-Patterns durch `errText`-Aufrufe ersetzt. Neuer `createdIds`-Set Cache in StateManager spart pro Poll setObjectNotExistsAsync-Roundtrips. Baseline auf Node 22 + Admin >=7.8.23 + @types/node ^22.x + @tsconfig/node22, Deploy-Step PRE-EMPTIVE auf Node 24 (parcelapp v0.4.0 MODULE_NOT_FOUND-Workaround))
+- **Version:** 0.4.1 (in progress — README-Whitespace-Fix nach v0.4.0 Release: alcalzone-iobroker-Plugin hatte beim Rotieren von 0.3.5 in CHANGELOG_OLD die Leerzeile zwischen `Older entries...`-Footer und `## Support` gefressen. Fix-Hook `Entwicklung/scripts/fix-changelog-footer.py` erweitert um Spacing-Normalisierung — fängt jetzt auch „Footer klebt am nächsten Header" zusätzlich zum bereits bekannten „Footer fehlt komplett". v0.4.0 (2026-05-07) brachte die Multi-Language-Welle: 14 LOG_STRINGS × 11 Sprachen, 52 STATE_NAMES × 11 Sprachen, createdIds-Cache, errText-Zentralisierung, Node 22 baseline)
 - **GitHub:** https://github.com/krobipd/ioBroker.beszel
 - **npm:** https://www.npmjs.com/package/iobroker.beszel
 - **Repository PR:** ioBroker/ioBroker.repositories#5787
@@ -64,13 +64,13 @@ Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Call
 
 | Version | Highlights |
 |---------|------------|
+| 0.4.1 | README-Whitespace-Hotfix: Leerzeile zwischen Changelog-Footer und `## Support` wiederhergestellt (alcalzone-Plugin hatte sie beim Rotieren in v0.4.0 gefressen). Fix-Hook `fix-changelog-footer.py` um Spacing-Normalisierung erweitert — fängt jetzt beide Bug-Varianten (fehlend + zusammengeklebt) |
 | 0.4.0 | Multi-Language-Welle analog hassemu v1.28.0 / govee v2.6.0: `lib/i18n-logs.ts` (14 LOG_STRINGS × 11 Sprachen + tLog Helper), `lib/i18n-states.ts` (52 STATE_NAMES × 11 Sprachen + tName Helper). Alle State-Common-Factories auf `ioBroker.StringOrTranslated`, alle hardcoded EN-Strings via `tName('key')`. Lokaler `errText` aus main.ts in `lib/coerce.ts` zentralisiert (4 Inline-Patterns durch `errText`-Aufrufe ersetzt). `createdIds`-Set Cache spart pro Poll setObjectNotExistsAsync-Roundtrips. Baseline auf Node 22 + Admin >=7.8.23 + @types/node ^22.x + @tsconfig/node22, Deploy-Step PRE-EMPTIVE auf Node 24 |
 | 0.3.10 | Doku-Welle: Release-Notes für v0.3.3–v0.3.9 in user-friendly Stil über alle 11 Sprachen umgeschrieben |
 | 0.3.9 | Doku-Cleanup, keine Code-Änderungen |
 | 0.3.8 | Cleanup-Welle analog parcelapp v0.3.0: `format` + `format:check` npm-scripts, dependabot.yml ignore-Block, repochecker-version-gate Master-Snippet |
 | 0.3.7 | Audit-Cleanup gegen ioBroker.example/TypeScript-Vollstandard: Test-Setup auf `src/lib/*.test.ts` + ts-node, dependabot ignore-Block für Major-Bumps |
 | 0.3.6 | Hotfix js-controller-Min auf `>=6.0.11` (Repochecker-recommended), war versehentlich `>=7.0.23` |
-| 0.3.5 | Process-level `unhandledRejection`/`uncaughtException`-Handler. `manual-review`-Plugin raus |
 
 ## Befehle
 

@@ -3,6 +3,19 @@
     "name": "beszel",
     "version": "0.4.0",
     "news": {
+      "NEXT": {
+        "en": "Restored the blank line between the changelog footer and the Support section (release-script swallowed it in v0.4.0).",
+        "de": "Leerzeile zwischen Changelog-Footer und Support-Abschnitt wiederhergestellt (release-script hatte sie in v0.4.0 verschluckt).",
+        "ru": "Восстановлена пустая строка между футером changelog и разделом Support (release-script удалил её в v0.4.0).",
+        "pt": "Restaurada a linha em branco entre o rodapé do changelog e a secção Support (o release-script removeu-a na v0.4.0).",
+        "nl": "Lege regel tussen de changelog-voettekst en de Support-sectie hersteld (release-script verwijderde hem in v0.4.0).",
+        "fr": "Ligne vide entre le pied de changelog et la section Support restaurée (le release-script l'avait supprimée en v0.4.0).",
+        "it": "Ripristinata la riga vuota tra il piè di changelog e la sezione Support (release-script l'aveva rimossa nella v0.4.0).",
+        "es": "Restaurada la línea en blanco entre el pie del changelog y la sección Support (el release-script la eliminó en la v0.4.0).",
+        "pl": "Przywrócono pustą linię między stopką changeloga a sekcją Support (release-script usunął ją w v0.4.0).",
+        "uk": "Відновлено порожній рядок між футером changelog та секцією Support (release-script видалив його у v0.4.0).",
+        "zh-cn": "恢复了 changelog 页脚与 Support 段落之间的空行（v0.4.0 中被 release-script 吞掉了）。"
+      },
       "0.4.0": {
         "en": "State names and log messages localized in 11 ioBroker languages, following the system setting. Object cache cuts js-controller calls per poll. Baseline: Node 22, Admin 7.8.23.",
         "de": "Datenpunkt-Namen und Log-Meldungen in 11 ioBroker-Sprachen, folgen der Systemsprache. Objekt-Cache spart js-controller-Calls pro Poll. Basis: Node 22, Admin 7.8.23.",
@@ -80,19 +93,6 @@
         "pl": "Min. js-controller przywrócony do >=6.0.11 (w 0.3.5 błędnie ustawiony na >=7.0.23).",
         "uk": "Мін. js-controller повернено на >=6.0.11 (у 0.3.5 помилково було >=7.0.23).",
         "zh-cn": "最低 js-controller 恢复为 >=6.0.11（0.3.5 中错误地设置为 >=7.0.23）。"
-      },
-      "0.3.5": {
-        "en": "Crash defense: process-level error handlers.",
-        "de": "Crash-Schutz: process-level Error-Handler.",
-        "ru": "Защита от сбоев: process-level обработчики ошибок.",
-        "pt": "Proteção contra falhas: handlers de erro process-level.",
-        "nl": "Crashbescherming: process-level error-handlers.",
-        "fr": "Défense contre les crashs : handlers d'erreur process-level.",
-        "it": "Difesa anti-crash: handler di errore process-level.",
-        "es": "Defensa contra fallos: handlers de error process-level.",
-        "pl": "Ochrona przed crashem: handlery błędów process-level.",
-        "uk": "Захист від збоїв: process-level обробники помилок.",
-        "zh-cn": "崩溃防护：process-level 错误处理器。"
       }
     },
     "titleLang": {
