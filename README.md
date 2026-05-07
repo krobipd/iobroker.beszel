@@ -171,7 +171,7 @@ beszel.0.
 ---
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.4.0 (2026-05-07)
 - State names and log messages localized in 11 ioBroker languages, following the system setting.
 - Object cache cuts js-controller calls per poll cycle.
 - Baseline: Node 22, Admin 7.8.23 (ioBroker May-2026 stable).
@@ -188,12 +188,7 @@ beszel.0.
 ### 0.3.7 (2026-04-28)
 - Internal cleanup. No user-facing changes.
 
-### 0.3.6 (2026-04-26)
-- Min `js-controller` restored to `>=6.0.11` (was incorrectly bumped to `>=7.0.23` in 0.3.5).
-
-Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
-
-## Support
+Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).## Support
 
 - [ioBroker Forum](https://forum.iobroker.net/)
 - [GitHub Issues](https://github.com/krobipd/ioBroker.beszel/issues)

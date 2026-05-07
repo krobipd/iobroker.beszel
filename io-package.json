@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.3.10",
+    "version": "0.4.0",
     "news": {
-      "NEXT": {
+      "0.4.0": {
         "en": "State names and log messages localized in 11 ioBroker languages, following the system setting. Object cache cuts js-controller calls per poll. Baseline: Node 22, Admin 7.8.23.",
         "de": "Datenpunkt-Namen und Log-Meldungen in 11 ioBroker-Sprachen, folgen der Systemsprache. Objekt-Cache spart js-controller-Calls pro Poll. Basis: Node 22, Admin 7.8.23.",
         "ru": "Имена датчиков и сообщения журнала на 11 языках ioBroker, следуют системному языку. Кэш объектов сокращает вызовы js-controller за опрос. База: Node 22, Admin 7.8.23.",
