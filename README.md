@@ -175,7 +175,7 @@ beszel.0.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.4.2 (2026-05-09)
 - Adapter log messages are now English only, in line with the ioBroker community standard. Localized state names (11 languages) are unchanged.
 
 ### 0.4.1 (2026-05-07)
@@ -191,9 +191,6 @@ beszel.0.
 
 ### 0.3.9 (2026-05-01)
 - Documentation cleanup. No code changes.
-
-### 0.3.8 (2026-04-30)
-- Internal cleanup. No user-facing changes.
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
