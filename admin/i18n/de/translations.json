@@ -40,5 +40,7 @@
     "aboutInfo": "Dieser Adapter ist kostenlos und Open Source. Wenn er dir nützlich ist, unterstütze die Entwicklung gerne mit einer kleinen Spende.",
     "donateKofi": "Unterstützen auf Ko-fi",
     "donatePaypal": "Über PayPal spenden",
-    "supportHeader": "Unterstützung"
+    "supportHeader": "Unterstützung",
+    "label_requestTimeout": "Anfrage-Timeout (s)",
+    "help_requestTimeout": "Wie lange auf eine Antwort vom Hub gewartet wird. Erhöhe den Wert bei langsamen Verbindungen oder sehr großen Container-/Stats-Antworten."
 }

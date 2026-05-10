@@ -40,5 +40,7 @@
     "aboutInfo": "Questo adapter è gratuito e open source. Se lo trovi utile, considera di supportare lo sviluppo con una piccola donazione.",
     "donateKofi": "Supporta su Ko-fi",
     "donatePaypal": "Dona tramite PayPal",
-    "supportHeader": "Supporto"
+    "supportHeader": "Supporto",
+    "label_requestTimeout": "Timeout richiesta (s)",
+    "help_requestTimeout": "Quanto attendere la risposta dell'Hub. Aumenta per connessioni lente o payload container/stats di grandi dimensioni."
 }

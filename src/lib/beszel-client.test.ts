@@ -416,24 +416,35 @@ describe("BeszelClient", () => {
             const port = await mock.start();
 
             const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
-            const stats = await client.getLatestStats(["sys001", "sys002"]);
+            const stats = await client.getLatestStats();
 
             expect(stats.size).to.equal(2);
             expect(stats.get("sys001")?.cpu).to.equal(45.0);
             expect(stats.get("sys002")?.cpu).to.equal(10.0);
         });
 
-        it("should return empty map for empty system IDs", async () => {
-            mock = createMockServer();
+        it("should return empty map when API returns empty list (B7 v0.4.3)", async () => {
+            // v0.4.3 (B7): getLatestStats no longer takes a `systemIds` array —
+            // the API call doesn't filter on it, so we always fetch and let
+            // the result speak for itself. This test confirms an empty result
+            // surfaces as an empty map.
+            mock = createMockServer({
+                statsHandler: () => ({
+                    status: 200,
+                    body: JSON.stringify({
+                        page: 1,
+                        perPage: 200,
+                        totalItems: 0,
+                        totalPages: 0,
+                        items: [],
+                    }),
+                }),
+            });
             const port = await mock.start();
 
             const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
-            const stats = await client.getLatestStats([]);
+            const stats = await client.getLatestStats();
             expect(stats.size).to.equal(0);
-
-            // Should not even make a request (besides auth)
-            const statsRequests = mock.requestLog.filter((r) => r.path.includes("system_stats"));
-            expect(statsRequests).to.have.lengthOf(0);
         });
 
         it("should deduplicate and keep newest per system", async () => {
@@ -457,7 +468,7 @@ describe("BeszelClient", () => {
             const port = await mock.start();
 
             const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
-            const stats = await client.getLatestStats(["sys001", "sys002"]);
+            const stats = await client.getLatestStats();
 
             // Should keep the first (newest) record for sys001
             expect(stats.get("sys001")?.cpu).to.equal(50);
@@ -561,7 +572,9 @@ describe("BeszelClient", () => {
             }
         });
 
-        it("should handle 403 Forbidden", async () => {
+        it("should set FORBIDDEN code on 403 (B4' v0.4.3)", async () => {
+            // 403 = permissions issue — distinct error code so the adapter
+            // can surface a "check user role" hint instead of looping reauth.
             mock = createMockServer({
                 systemsHandler: () => ({
                     status: 403,
@@ -576,7 +589,7 @@ describe("BeszelClient", () => {
                 expect.fail("Should have thrown");
             } catch (err) {
                 expect((err as Error).message).to.include("403");
-                expect((err as NodeJS.ErrnoException).code).to.equal("HTTP_ERROR");
+                expect((err as NodeJS.ErrnoException).code).to.equal("FORBIDDEN");
             }
         });
     });
@@ -720,7 +733,7 @@ describe("BeszelClient", () => {
             const port = await mock.start();
 
             const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
-            const stats = await client.getLatestStats(["sys001"]);
+            const stats = await client.getLatestStats();
             const s = stats.get("sys001")!;
             expect(s.cpu).to.be.undefined;
             expect(s.mu).to.be.undefined;
@@ -747,7 +760,7 @@ describe("BeszelClient", () => {
             const port = await mock.start();
 
             const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
-            const stats = await client.getLatestStats(["sys001"]);
+            const stats = await client.getLatestStats();
             expect(stats.get("sys001")!.la).to.be.undefined;
         });
 
@@ -773,7 +786,7 @@ describe("BeszelClient", () => {
             const port = await mock.start();
 
             const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
-            const stats = await client.getLatestStats(["sys001"]);
+            const stats = await client.getLatestStats();
             expect(stats.get("sys001")!.t).to.deep.equal({ cpu: 55, mb: 48 });
         });
 
@@ -834,7 +847,7 @@ describe("BeszelClient", () => {
             const port = await mock.start();
 
             const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
-            const stats = await client.getLatestStats(["sys001"]);
+            const stats = await client.getLatestStats();
             expect(stats.size).to.equal(0);
         });
     });
@@ -886,5 +899,175 @@ describe("BeszelClient", () => {
             // Auth request (first) should have no authorization header
             expect(mock.requestLog[0].headers.authorization).to.be.undefined;
         });
+    });
+
+    // -----------------------------------------------------------------------
+    // v0.4.3 hardening — token mutex, pagination, retry, abort
+    // -----------------------------------------------------------------------
+
+    describe("token mutex (B1 v0.4.3)", () => {
+        it("concurrent requests share a single authenticate round-trip", async () => {
+            mock = createMockServer();
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            // Three parallel calls — without B1 each would auth separately.
+            await Promise.all([client.getSystems(), client.getContainers(), client.getLatestStats()]);
+
+            const authCalls = mock.requestLog.filter((r) => r.path.includes("auth-with-password"));
+            expect(authCalls).to.have.lengthOf(1);
+        });
+    });
+
+    describe("pagination (B2 v0.4.3)", () => {
+        it("walks every PocketBase page and accumulates items", async () => {
+            // 3 pages, 2 items each — total 6 items
+            let pageRequests = 0;
+            mock = createMockServer({
+                systemsHandler: () => {
+                    pageRequests++;
+                    const page = pageRequests;
+                    return {
+                        status: 200,
+                        body: JSON.stringify({
+                            page,
+                            perPage: 2,
+                            totalItems: 6,
+                            totalPages: 3,
+                            items: [
+                                {
+                                    id: `sys${page}a`,
+                                    name: `Server ${page}A`,
+                                    status: "up",
+                                    host: `1.1.1.${page}`,
+                                    info: {},
+                                },
+                                {
+                                    id: `sys${page}b`,
+                                    name: `Server ${page}B`,
+                                    status: "up",
+                                    host: `2.2.2.${page}`,
+                                    info: {},
+                                },
+                            ],
+                        }),
+                    };
+                },
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const systems = await client.getSystems();
+            expect(systems).to.have.lengthOf(6);
+            expect(pageRequests).to.equal(3);
+        });
+
+        it("stops early when a page comes back empty", async () => {
+            let pageRequests = 0;
+            mock = createMockServer({
+                systemsHandler: () => {
+                    pageRequests++;
+                    return {
+                        status: 200,
+                        body: JSON.stringify({
+                            page: pageRequests,
+                            perPage: 200,
+                            totalItems: 0,
+                            totalPages: 99, // mis-reporting — defensive cap should not loop
+                            items: [],
+                        }),
+                    };
+                },
+            });
+            const port = await mock.start();
+
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const systems = await client.getSystems();
+            expect(systems).to.have.lengthOf(0);
+            expect(pageRequests).to.equal(1);
+        });
+    });
+
+    describe("429 rate-limit retry (B3 v0.4.3)", () => {
+        it("retries once on 429 honouring Retry-After, then succeeds", async () => {
+            let calls = 0;
+            mock = createMockServer({
+                systemsHandler: () => {
+                    calls++;
+                    if (calls === 1) {
+                        // First call: 429 with Retry-After: 1
+                        return {
+                            status: 429,
+                            body: JSON.stringify({ message: "rate limited" }),
+                        };
+                    }
+                    return {
+                        status: 200,
+                        body: JSON.stringify({
+                            page: 1,
+                            perPage: 200,
+                            totalItems: 0,
+                            totalPages: 0,
+                            items: [],
+                        }),
+                    };
+                },
+            });
+            const port = await mock.start();
+            // Inject a Retry-After: 1 header in the mock response — the mock
+            // helper above doesn't expose headers, so we rely on the default
+            // 1-second backoff inside the client.
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            const systems = await client.getSystems();
+            expect(systems).to.have.lengthOf(0);
+            // First systems-request was 429 → retry → 200
+            const sysCalls = mock.requestLog.filter((r) => r.path.includes("/systems/records"));
+            expect(sysCalls.length).to.be.greaterThan(1);
+        }).timeout(10000);
+
+        it("surfaces RATE_LIMITED if the retry also gets 429", async () => {
+            mock = createMockServer({
+                systemsHandler: () => ({
+                    status: 429,
+                    body: JSON.stringify({ message: "rate limited" }),
+                }),
+            });
+            const port = await mock.start();
+            const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret");
+            try {
+                await client.getSystems();
+                expect.fail("Should have thrown");
+            } catch (err) {
+                expect((err as NodeJS.ErrnoException).code).to.equal("RATE_LIMITED");
+            }
+        }).timeout(10000);
+    });
+
+    describe("AbortController cancel (B8 v0.4.3)", () => {
+        it("cancelAll() aborts pending requests", async () => {
+            // Server that hangs forever — cancelAll() should reject the promise.
+            const hangServer = http.createServer(() => {
+                /* never respond */
+            });
+            await new Promise<void>((resolve) => hangServer.listen(0, "127.0.0.1", () => resolve()));
+            const port = (hangServer.address() as { port: number }).port;
+
+            try {
+                const client = new BeszelClient(`http://127.0.0.1:${port}`, "admin", "secret", 60_000);
+                const promise = client.getSystems();
+                // Give the request a moment to actually start
+                await new Promise((r) => setTimeout(r, 50));
+                client.cancelAll();
+                let aborted = false;
+                try {
+                    await promise;
+                } catch {
+                    aborted = true;
+                }
+                expect(aborted).to.equal(true);
+            } finally {
+                await new Promise<void>((resolve) => hangServer.close(() => resolve()));
+            }
+        }).timeout(5000);
     });
 });

@@ -34,11 +34,15 @@ class BeszelAdapter extends utils.Adapter {
     // fire-and-forget paths (e.g. `void this.poll()`). The per-handler
     // .catch() wrappers cover the documented async paths; this catches
     // anything that slips past during refactors.
+    // v0.4.3 (M1): log + terminate(11) instead of leaving the process alive
+    // in an undefined state.
     this.unhandledRejectionHandler = (reason: unknown) => {
       this.log.error(`Unhandled rejection: ${errText(reason)}`);
+      this.terminate?.(11);
     };
     this.uncaughtExceptionHandler = (err: Error) => {
       this.log.error(`Uncaught exception: ${errText(err)}`);
+      this.terminate?.(11);
     };
     process.on("unhandledRejection", this.unhandledRejectionHandler);
     process.on("uncaughtException", this.uncaughtExceptionHandler);
@@ -57,29 +61,93 @@ class BeszelAdapter extends utils.Adapter {
       return;
     }
 
-    this.client = new BeszelClient(config.url, config.username, config.password);
+    // v0.4.3 (M5): URL-shape validation BEFORE constructing the client.
+    // Earlier any string passed through and only the first request rejected
+    // with a confusing "Invalid URL" late error.
+    const urlError = BeszelAdapter.validateHubUrl(config.url);
+    if (urlError) {
+      this.log.error(`Beszel Hub URL is invalid — ${urlError}. Adapter will not start.`);
+      return;
+    }
+
+    // v0.4.3 (B5): per-request timeout flows through from admin (default 15s).
+    const timeoutMs = BeszelAdapter.coerceTimeoutMs(config.requestTimeout);
+    this.client = new BeszelClient(config.url, config.username, config.password, timeoutMs);
     this.stateManager = new StateManager(this);
 
     // Migrate legacy flat state paths from pre-0.3.0
     await this.stateManager.migrateLegacyStates();
 
-    // Cleanup disabled metric states for existing systems (config may have changed)
-    for (const name of await this.stateManager.getExistingSystemNames()) {
-      await this.stateManager.cleanupMetrics(name, config);
-    }
+    // v0.4.3 (M2): cleanupMetrics in parallel — sequential per system was
+    // pointless serialisation of independent broker calls.
+    const existingNames = await this.stateManager.getExistingSystemNames();
+    await Promise.all(existingNames.map(name => this.stateManager!.cleanupMetrics(name, config)));
 
     // Initial poll
     await this.poll();
 
-    // Set up recurring poll
-    const intervalMs = Math.max(10, config.pollInterval ?? 60) * 1000;
+    // v0.4.3 (M6): coerce poll-interval explicitly. `Math.max(10, "30") *
+    // 1000` returns NaN, and `setInterval(fn, NaN)` becomes `setInterval(fn,
+    // 0)` — a tight loop that hammers the Hub.
+    const pollSec = BeszelAdapter.coercePollInterval(config.pollInterval);
+    const intervalMs = pollSec * 1000;
     this.pollTimer = this.setInterval(() => {
       void this.poll();
     }, intervalMs);
 
-    this.log.info(
-      `Beszel adapter started — ${this.lastSystemCount} system(s), polling every ${config.pollInterval ?? 60}s`,
-    );
+    this.log.info(`Beszel adapter started — ${this.lastSystemCount} system(s), polling every ${pollSec}s`);
+  }
+
+  /**
+   * v0.4.3 (M5): URL-shape validator. Returns a short reason string when
+   * the URL is unusable, or null when it's OK to hand to the client.
+   *
+   * @param url The raw URL value from admin config.
+   */
+  private static validateHubUrl(url: unknown): string | null {
+    if (typeof url !== "string" || url.trim().length === 0) {
+      return "URL is empty";
+    }
+    try {
+      const u = new URL(url.trim());
+      if (u.protocol !== "http:" && u.protocol !== "https:") {
+        return `protocol '${u.protocol}' is not http(s)`;
+      }
+      if (!u.hostname) {
+        return "hostname is missing";
+      }
+      return null;
+    } catch {
+      return "URL is malformed";
+    }
+  }
+
+  /**
+   * v0.4.3 (M6): coerce poll-interval to a finite number of seconds, default
+   * 60 s, clamped >= 10 s.
+   *
+   * @param raw Raw `pollInterval` from admin config (number or numeric string).
+   */
+  private static coercePollInterval(raw: unknown): number {
+    const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
+    if (!Number.isFinite(n)) {
+      return 60;
+    }
+    return Math.max(10, Math.floor(n));
+  }
+
+  /**
+   * v0.4.3 (B5): coerce admin's `requestTimeout` (seconds) to ms. Default
+   * 15 s when missing/unparseable. Clamped to [5 s, 120 s].
+   *
+   * @param raw Raw `requestTimeout` from admin config (number or numeric string).
+   */
+  private static coerceTimeoutMs(raw: unknown): number {
+    const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
+    if (!Number.isFinite(n)) {
+      return 15_000;
+    }
+    return Math.max(5, Math.min(120, Math.floor(n))) * 1000;
   }
 
   private onUnload(callback: () => void): void {
@@ -88,6 +156,9 @@ class BeszelAdapter extends utils.Adapter {
         this.clearInterval(this.pollTimer);
         this.pollTimer = undefined;
       }
+      // v0.4.3 (X1+B8): cancel every in-flight HTTP request so a slow Hub
+      // doesn't keep the adapter alive past js-controller's 4-second kill.
+      this.client?.cancelAll();
       if (this.unhandledRejectionHandler) {
         process.off("unhandledRejection", this.unhandledRejectionHandler);
         this.unhandledRejectionHandler = null;
@@ -96,7 +167,11 @@ class BeszelAdapter extends utils.Adapter {
         process.off("uncaughtException", this.uncaughtExceptionHandler);
         this.uncaughtExceptionHandler = null;
       }
-      void this.setState("info.connection", { val: false, ack: true });
+      // v0.4.3 (X2): explicit catch — broker-already-down should not leak
+      // as an unhandled rejection.
+      void this.setState("info.connection", { val: false, ack: true }).catch(() => {
+        /* broker is shutting down */
+      });
     } catch {
       // ignore
     }
@@ -149,6 +224,15 @@ class BeszelAdapter extends utils.Adapter {
     if (code === "UNAUTHORIZED") {
       return "UNAUTHORIZED";
     }
+    // v0.4.3 (B4'): 403 is a permissions issue — distinct from auth so the
+    // poll-handler can give a useful "check user role" hint.
+    if (code === "FORBIDDEN") {
+      return "FORBIDDEN";
+    }
+    // v0.4.3 (B3): 429 surfaces if the in-client retry also got rate-limited.
+    if (code === "RATE_LIMITED") {
+      return "RATE_LIMITED";
+    }
     if (
       code === "ENOTFOUND" ||
       code === "ECONNREFUSED" ||
@@ -178,34 +262,43 @@ class BeszelAdapter extends utils.Adapter {
     try {
       const config = this.config as unknown as AdapterConfig;
 
-      // Fetch all data
-      const [systems, containers] = await Promise.all([
+      // v0.4.3 (M3): all three API calls in parallel. With B1's auth-mutex
+      // they share a single auth round-trip if the token is missing.
+      // Earlier `getLatestStats` waited for `getSystems` to finish even
+      // though the API endpoint doesn't actually need the system IDs.
+      const [systems, containers, statsMap] = await Promise.all([
         this.client.getSystems(),
         config.metrics_containers ? this.client.getContainers() : Promise.resolve([]),
+        this.client.getLatestStats(),
       ]);
-
-      const systemIds = systems.map(s => s.id);
-      const statsMap = await this.client.getLatestStats(systemIds);
 
       // Update connection state
       await this.setStateAsync("info.connection", { val: true, ack: true });
 
-      // Update each system (isolated: one failure must not block others)
-      for (const system of systems) {
-        try {
-          const stats = statsMap.get(system.id);
-          await this.stateManager.updateSystem(system, stats, containers, config);
-          this.failedSystems.delete(system.name);
-        } catch (err) {
-          const msg = `Failed to update system '${system.name}': ${errText(err)}`;
-          if (this.failedSystems.has(system.name)) {
-            this.log.debug(msg);
-          } else {
-            this.log.warn(msg);
-            this.failedSystems.add(system.name);
+      // v0.4.3 (SM5): pre-resolve safeNames deterministically so collisions
+      // between two systems with the same sanitized name get suffixed
+      // disambiguation BEFORE the parallel update fan-out.
+      this.stateManager.prepareForPoll(systems);
+
+      // v0.4.3 (M4): per-system updates run in parallel, each wrapped in
+      // try/catch so one bad system doesn't poison the others.
+      await Promise.all(
+        systems.map(async system => {
+          try {
+            const stats = statsMap.get(system.id);
+            await this.stateManager!.updateSystem(system, stats, containers, config);
+            this.failedSystems.delete(system.name);
+          } catch (err) {
+            const msg = `Failed to update system '${system.name}': ${errText(err)}`;
+            if (this.failedSystems.has(system.name)) {
+              this.log.debug(msg);
+            } else {
+              this.log.warn(msg);
+              this.failedSystems.add(system.name);
+            }
           }
-        }
-      }
+        }),
+      );
 
       // Cleanup stale systems — but only if we actually got results.
       // An empty list during a transient API issue must NOT wipe all devices.
@@ -240,6 +333,13 @@ class BeszelAdapter extends utils.Adapter {
         }
       } else if (isRepeat) {
         this.log.debug(`Poll failed (ongoing): ${errMsg}`);
+      } else if (errorCode === "FORBIDDEN") {
+        // v0.4.3 (B4'): permission issue — reauth wouldn't help. Hint the user.
+        this.log.error(
+          `Beszel Hub returned 403 Forbidden — the configured user has no permission for these collections. Check the user role on the Hub admin UI.`,
+        );
+      } else if (errorCode === "RATE_LIMITED") {
+        this.log.warn("Beszel Hub rate-limited the request — slowing down. Consider increasing the poll interval.");
       } else if (errorCode === "NETWORK") {
         this.log.warn("Cannot reach Beszel Hub — will keep retrying");
       } else {

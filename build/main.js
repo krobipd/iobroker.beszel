@@ -49,43 +49,101 @@ class BeszelAdapter extends utils.Adapter {
       this.onMessage(obj).catch((err) => this.log.error(`onMessage failed: ${(0, import_coerce.errText)(err)}`));
     });
     this.unhandledRejectionHandler = (reason) => {
+      var _a;
       this.log.error(`Unhandled rejection: ${(0, import_coerce.errText)(reason)}`);
+      (_a = this.terminate) == null ? void 0 : _a.call(this, 11);
     };
     this.uncaughtExceptionHandler = (err) => {
+      var _a;
       this.log.error(`Uncaught exception: ${(0, import_coerce.errText)(err)}`);
+      (_a = this.terminate) == null ? void 0 : _a.call(this, 11);
     };
     process.on("unhandledRejection", this.unhandledRejectionHandler);
     process.on("uncaughtException", this.uncaughtExceptionHandler);
   }
   async onReady() {
-    var _a, _b;
     const config = this.config;
     await this.setStateAsync("info.connection", { val: false, ack: true });
     if (!config.url || !config.username || !config.password) {
       this.log.error("URL, username, and password are required \u2014 please configure the adapter settings");
       return;
     }
-    this.client = new import_beszel_client.BeszelClient(config.url, config.username, config.password);
+    const urlError = BeszelAdapter.validateHubUrl(config.url);
+    if (urlError) {
+      this.log.error(`Beszel Hub URL is invalid \u2014 ${urlError}. Adapter will not start.`);
+      return;
+    }
+    const timeoutMs = BeszelAdapter.coerceTimeoutMs(config.requestTimeout);
+    this.client = new import_beszel_client.BeszelClient(config.url, config.username, config.password, timeoutMs);
     this.stateManager = new import_state_manager.StateManager(this);
     await this.stateManager.migrateLegacyStates();
-    for (const name of await this.stateManager.getExistingSystemNames()) {
-      await this.stateManager.cleanupMetrics(name, config);
-    }
+    const existingNames = await this.stateManager.getExistingSystemNames();
+    await Promise.all(existingNames.map((name) => this.stateManager.cleanupMetrics(name, config)));
     await this.poll();
-    const intervalMs = Math.max(10, (_a = config.pollInterval) != null ? _a : 60) * 1e3;
+    const pollSec = BeszelAdapter.coercePollInterval(config.pollInterval);
+    const intervalMs = pollSec * 1e3;
     this.pollTimer = this.setInterval(() => {
       void this.poll();
     }, intervalMs);
-    this.log.info(
-      `Beszel adapter started \u2014 ${this.lastSystemCount} system(s), polling every ${(_b = config.pollInterval) != null ? _b : 60}s`
-    );
+    this.log.info(`Beszel adapter started \u2014 ${this.lastSystemCount} system(s), polling every ${pollSec}s`);
+  }
+  /**
+   * v0.4.3 (M5): URL-shape validator. Returns a short reason string when
+   * the URL is unusable, or null when it's OK to hand to the client.
+   *
+   * @param url
+   */
+  static validateHubUrl(url) {
+    if (typeof url !== "string" || url.trim().length === 0) {
+      return "URL is empty";
+    }
+    try {
+      const u = new URL(url.trim());
+      if (u.protocol !== "http:" && u.protocol !== "https:") {
+        return `protocol '${u.protocol}' is not http(s)`;
+      }
+      if (!u.hostname) {
+        return "hostname is missing";
+      }
+      return null;
+    } catch {
+      return "URL is malformed";
+    }
+  }
+  /**
+   * v0.4.3 (M6): coerce poll-interval to a finite number of seconds, default
+   * 60 s, clamped >= 10 s.
+   *
+   * @param raw
+   */
+  static coercePollInterval(raw) {
+    const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
+    if (!Number.isFinite(n)) {
+      return 60;
+    }
+    return Math.max(10, Math.floor(n));
+  }
+  /**
+   * v0.4.3 (B5): coerce admin's `requestTimeout` (seconds) to ms. Default
+   * 15 s when missing/unparseable. Clamped to [5 s, 120 s].
+   *
+   * @param raw
+   */
+  static coerceTimeoutMs(raw) {
+    const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
+    if (!Number.isFinite(n)) {
+      return 15e3;
+    }
+    return Math.max(5, Math.min(120, Math.floor(n))) * 1e3;
   }
   onUnload(callback) {
+    var _a;
     try {
       if (this.pollTimer) {
         this.clearInterval(this.pollTimer);
         this.pollTimer = void 0;
       }
+      (_a = this.client) == null ? void 0 : _a.cancelAll();
       if (this.unhandledRejectionHandler) {
         process.off("unhandledRejection", this.unhandledRejectionHandler);
         this.unhandledRejectionHandler = null;
@@ -94,7 +152,8 @@ class BeszelAdapter extends utils.Adapter {
         process.off("uncaughtException", this.uncaughtExceptionHandler);
         this.uncaughtExceptionHandler = null;
       }
-      void this.setState("info.connection", { val: false, ack: true });
+      void this.setState("info.connection", { val: false, ack: true }).catch(() => {
+      });
     } catch {
     }
     callback();
@@ -143,6 +202,12 @@ class BeszelAdapter extends utils.Adapter {
     if (code === "UNAUTHORIZED") {
       return "UNAUTHORIZED";
     }
+    if (code === "FORBIDDEN") {
+      return "FORBIDDEN";
+    }
+    if (code === "RATE_LIMITED") {
+      return "RATE_LIMITED";
+    }
     if (code === "ENOTFOUND" || code === "ECONNREFUSED" || code === "ECONNRESET" || code === "ENETUNREACH" || code === "EHOSTUNREACH" || code === "EAI_AGAIN") {
       return "NETWORK";
     }
@@ -163,28 +228,30 @@ class BeszelAdapter extends utils.Adapter {
     this.isPolling = true;
     try {
       const config = this.config;
-      const [systems, containers] = await Promise.all([
+      const [systems, containers, statsMap] = await Promise.all([
         this.client.getSystems(),
-        config.metrics_containers ? this.client.getContainers() : Promise.resolve([])
+        config.metrics_containers ? this.client.getContainers() : Promise.resolve([]),
+        this.client.getLatestStats()
       ]);
-      const systemIds = systems.map((s) => s.id);
-      const statsMap = await this.client.getLatestStats(systemIds);
       await this.setStateAsync("info.connection", { val: true, ack: true });
-      for (const system of systems) {
-        try {
-          const stats = statsMap.get(system.id);
-          await this.stateManager.updateSystem(system, stats, containers, config);
-          this.failedSystems.delete(system.name);
-        } catch (err) {
-          const msg = `Failed to update system '${system.name}': ${(0, import_coerce.errText)(err)}`;
-          if (this.failedSystems.has(system.name)) {
-            this.log.debug(msg);
-          } else {
-            this.log.warn(msg);
-            this.failedSystems.add(system.name);
+      this.stateManager.prepareForPoll(systems);
+      await Promise.all(
+        systems.map(async (system) => {
+          try {
+            const stats = statsMap.get(system.id);
+            await this.stateManager.updateSystem(system, stats, containers, config);
+            this.failedSystems.delete(system.name);
+          } catch (err) {
+            const msg = `Failed to update system '${system.name}': ${(0, import_coerce.errText)(err)}`;
+            if (this.failedSystems.has(system.name)) {
+              this.log.debug(msg);
+            } else {
+              this.log.warn(msg);
+              this.failedSystems.add(system.name);
+            }
           }
-        }
-      }
+        })
+      );
       if (systems.length > 0 || this.lastSystemCount === 0) {
         await this.stateManager.cleanupSystems(systems.map((s) => s.name));
       }
@@ -212,6 +279,12 @@ class BeszelAdapter extends utils.Adapter {
         }
       } else if (isRepeat) {
         this.log.debug(`Poll failed (ongoing): ${errMsg}`);
+      } else if (errorCode === "FORBIDDEN") {
+        this.log.error(
+          `Beszel Hub returned 403 Forbidden \u2014 the configured user has no permission for these collections. Check the user role on the Hub admin UI.`
+        );
+      } else if (errorCode === "RATE_LIMITED") {
+        this.log.warn("Beszel Hub rate-limited the request \u2014 slowing down. Consider increasing the poll interval.");
       } else if (errorCode === "NETWORK") {
         this.log.warn("Cannot reach Beszel Hub \u2014 will keep retrying");
       } else {

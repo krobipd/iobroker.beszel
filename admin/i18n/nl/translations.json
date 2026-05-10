@@ -40,5 +40,7 @@
     "aboutInfo": "Deze adapter is gratis en open source. Als je hem nuttig vindt, overweeg dan de ontwikkeling te steunen met een kleine donatie.",
     "donateKofi": "Steunen op Ko-fi",
     "donatePaypal": "Doneer via PayPal",
-    "supportHeader": "Ondersteuning"
+    "supportHeader": "Ondersteuning",
+    "label_requestTimeout": "Verzoek-time-out (s)",
+    "help_requestTimeout": "Hoe lang gewacht wordt op antwoord van de Hub. Verhoog bij trage verbindingen of grote container-/statspayloads."
 }

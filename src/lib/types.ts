@@ -10,6 +10,12 @@ export interface AdapterConfig {
   password: string;
   /** Poll interval in seconds */
   pollInterval: number;
+  /**
+   * v0.4.3 (B5): per-request HTTP timeout in seconds. Defaults to 15s when
+   * missing/unparseable. Useful when the Hub returns large container/stats
+   * payloads or sits behind a slow link.
+   */
+  requestTimeout?: number;
 
   // Metric toggles
   /** Enable uptime states */

@@ -22,6 +22,12 @@ export class StateManager {
   private readonly createdIds = new Set<string>();
 
   /**
+   * v0.4.3 (SM5): per-poll resolved safeName per system.id. Built once via
+   * `prepareForPoll(systems)` before per-system updates run in parallel.
+   */
+  private readonly resolvedSafeNames = new Map<string, string>();
+
+  /**
    * @param adapter The ioBroker adapter instance
    */
   constructor(adapter: utils.AdapterInstance) {
@@ -45,6 +51,83 @@ export class StateManager {
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "")
       .slice(0, 50);
+  }
+
+  /**
+   * v0.4.3 (SM5): Sanitize + suffix with a stable hash of `uniqueKey` so two
+   * records with the same post-sanitize name don't overwrite each other.
+   *
+   * @param name Raw display name to sanitize.
+   * @param uniqueKey Stable identifier (e.g. PocketBase record id) used to
+   *   derive the suffix.
+   */
+  public sanitizeWithSuffix(name: unknown, uniqueKey: string): string {
+    const base = this.sanitize(name);
+    if (!base) {
+      return "";
+    }
+    return `${base}__${StateManager.shortHash(uniqueKey)}`;
+  }
+
+  /**
+   * FNV-1a 32-bit short hash → 6 hex chars.
+   *
+   * @param s Input string to hash.
+   */
+  private static shortHash(s: string): string {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+    return (h >>> 0).toString(16).padStart(8, "0").slice(0, 6);
+  }
+
+  /**
+   * v0.4.3 (SM5): pre-compute the safeName for every system in this poll,
+   * disambiguating collisions. Sorted by id for determinism. The first
+   * occurrence keeps the bare safeName (back-compat); later collisions get
+   * the `__<hash>` suffix.
+   *
+   * @param systems Systems to be processed in this poll cycle.
+   */
+  public prepareForPoll(systems: BeszelSystem[]): void {
+    this.resolvedSafeNames.clear();
+    const sorted = [...systems].sort((a, b) => a.id.localeCompare(b.id));
+    const seen = new Set<string>();
+    const collisions = new Map<string, BeszelSystem[]>();
+    for (const sys of sorted) {
+      const safe = this.sanitize(sys.name);
+      if (!safe) {
+        this.resolvedSafeNames.set(sys.id, "");
+        continue;
+      }
+      if (seen.has(safe)) {
+        const arr = collisions.get(safe) ?? [];
+        arr.push(sys);
+        collisions.set(safe, arr);
+        this.resolvedSafeNames.set(sys.id, this.sanitizeWithSuffix(sys.name, sys.id));
+      } else {
+        seen.add(safe);
+        this.resolvedSafeNames.set(sys.id, safe);
+      }
+    }
+    for (const [safe, dupes] of collisions) {
+      const names = dupes.map(s => `${s.name}(${s.id.slice(0, 8)})`).join(", ");
+      this.adapter.log.warn(
+        `Multiple systems sanitize to '${safe}' (${names}) — adding hash suffix to disambiguate. Consider renaming on the Hub.`,
+      );
+    }
+  }
+
+  /**
+   * Resolved safeName from `prepareForPoll`, or fresh `sanitize(name)` fallback.
+   *
+   * @param system The Beszel system whose ID-segment we want.
+   */
+  private resolvedSafeName(system: BeszelSystem): string {
+    const cached = this.resolvedSafeNames.get(system.id);
+    return cached !== undefined ? cached : this.sanitize(system.name);
   }
 
   /**
@@ -85,7 +168,7 @@ export class StateManager {
     containers: BeszelContainer[],
     config: AdapterConfig,
   ): Promise<void> {
-    const safeName = this.sanitize(system.name);
+    const safeName = this.resolvedSafeName(system);
     if (safeName.length === 0) {
       this.adapter.log.warn(
         `Skipping system with unusable name: ${typeof system.name === "string" ? system.name : JSON.stringify(system.name)}`,
@@ -176,17 +259,23 @@ export class StateManager {
    */
   public async cleanupSystems(activeSystemNames: string[]): Promise<void> {
     const activeSet = new Set(activeSystemNames.map(n => this.sanitize(n)));
-    const existing = await this.getExistingSystemNames();
-
-    for (const name of existing) {
-      if (!activeSet.has(name)) {
-        this.adapter.log.debug(`Removing stale system: systems.${name}`);
-        await this.adapter.delObjectAsync(`systems.${name}`, {
-          recursive: true,
-        });
-        this.dropCacheUnder(`systems.${name}`);
+    // v0.4.3 (SM5): preserve disambiguated suffixed names so SM5-collision
+    // entries don't get treated as stale.
+    for (const safe of this.resolvedSafeNames.values()) {
+      if (safe) {
+        activeSet.add(safe);
       }
     }
+    const existing = await this.getExistingSystemNames();
+    const stale = existing.filter(name => !activeSet.has(name));
+    // v0.4.3 (SM1): stale-system removals in parallel.
+    await Promise.all(
+      stale.map(async name => {
+        this.adapter.log.debug(`Removing stale system: systems.${name}`);
+        await this.adapter.delObjectAsync(`systems.${name}`, { recursive: true });
+        this.dropCacheUnder(`systems.${name}`);
+      }),
+    );
   }
 
   /**
@@ -198,7 +287,9 @@ export class StateManager {
   private dropCacheUnder(prefix: string): void {
     const exact = prefix;
     const dot = `${prefix}.`;
-    for (const id of this.createdIds) {
+    // v0.4.3 (SM4): snapshot to array first — defensive against any future
+    // engine that diverges from spec on Set.delete during for-of iteration.
+    for (const id of [...this.createdIds]) {
       if (id === exact || id.startsWith(dot)) {
         this.createdIds.delete(id);
       }
@@ -265,13 +356,16 @@ export class StateManager {
       toDelete.push(`${sysId}.battery.percent`, `${sysId}.battery.charging`);
     }
 
-    for (const id of toDelete) {
-      const obj = await this.adapter.getObjectAsync(id);
-      if (obj) {
-        await this.adapter.delObjectAsync(id);
-        this.createdIds.delete(id);
-      }
-    }
+    // v0.4.3 (SM2): toDelete check + delete in parallel.
+    await Promise.all(
+      toDelete.map(async id => {
+        const obj = await this.adapter.getObjectAsync(id);
+        if (obj) {
+          await this.adapter.delObjectAsync(id);
+          this.createdIds.delete(id);
+        }
+      }),
+    );
 
     // Delete empty channels when all metrics in a group are disabled
     const noCpu = !config.metrics_cpu && !config.metrics_loadAvg && !config.metrics_cpuBreakdown;
@@ -364,25 +458,28 @@ export class StateManager {
       "battery_charging",
     ];
 
-    let migrated = 0;
-
-    for (const name of existingNames) {
-      const sysId = `systems.${name}`;
-
-      // Delete flat states (only if they are actual states, not new channels)
-      for (const stateId of legacyStates) {
-        const fullId = `${sysId}.${stateId}`;
-        const obj = await this.adapter.getObjectAsync(fullId);
-        if (obj && obj.type === "state") {
-          await this.adapter.delObjectAsync(fullId);
-          this.createdIds.delete(fullId);
-          migrated++;
+    // v0.4.3 (SM3): per-system migration in parallel; per-state checks
+    // within a system stay sequential (the mocha+ts-node ESM loader trips
+    // on doubly-nested Promise.all here — see Memory `feedback_mocha_esm_loader_bug`).
+    // Outer parallel still cuts total time by N where N = system count.
+    const counts = await Promise.all(
+      existingNames.map(async name => {
+        const sysId = `systems.${name}`;
+        let local = 0;
+        for (const stateId of legacyStates) {
+          const fullId = `${sysId}.${stateId}`;
+          const obj = await this.adapter.getObjectAsync(fullId);
+          if (obj && obj.type === "state") {
+            await this.adapter.delObjectAsync(fullId);
+            this.createdIds.delete(fullId);
+            local++;
+          }
         }
-      }
-
-      // Old "temperatures" channel → now "temperature.sensors"
-      await this.deleteChannelIfExists(`${sysId}.temperatures`);
-    }
+        await this.deleteChannelIfExists(`${sysId}.temperatures`);
+        return local;
+      }),
+    );
+    const migrated = counts.reduce((a, b) => a + b, 0);
 
     if (migrated > 0) {
       this.adapter.log.info(`Migration: removed ${migrated} legacy state(s) from flat structure`);
@@ -584,7 +681,13 @@ export class StateManager {
 
         const total = fsData.d ?? null;
         const used = fsData.du ?? null;
-        const percent = total !== null && used !== null && total > 0 ? Math.round((used / total) * 100) : null;
+        // v0.4.3 (SM8): clamp to [0, 100] — transient `used > total`
+        // (data drift between separate metric polls) shouldn't push > 100%
+        // into the state.
+        const percent =
+          total !== null && used !== null && total > 0
+            ? Math.min(100, Math.max(0, Math.round((used / total) * 100)))
+            : null;
 
         await this.createAndSetState(
           `${sysId}.filesystems.${safeId}.disk_percent`,
@@ -637,10 +740,13 @@ export class StateManager {
         this.textCommon(tName("status")),
         container.status,
       );
+      // v0.4.3 (SM7): floor the health index — API drift could send a
+      // float (e.g. 2.5) which `healthLabels[2.5]` resolves to undefined.
+      const healthIdx = Math.floor(container.health);
       await this.createAndSetState(
         `${sysId}.containers.${cId}.health`,
         this.textCommon(tName("containerHealth")),
-        healthLabels[container.health] ?? "unknown",
+        healthLabels[healthIdx] ?? "unknown",
       );
       await this.createAndSetState(
         `${sysId}.containers.${cId}.cpu`,
@@ -775,9 +881,12 @@ export class StateManager {
   }
 
   private formatUptime(seconds: number): string {
-    const d = Math.floor(seconds / 86400);
-    const h = Math.floor((seconds % 86400) / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
+    // v0.4.3 (SM10): clamp >= 0 — clock-skew or agent bug could send a
+    // negative value, which used to produce strings like "-1d -2h -3m".
+    const s = Math.max(0, seconds);
+    const d = Math.floor(s / 86400);
+    const h = Math.floor((s % 86400) / 3600);
+    const m = Math.floor((s % 3600) / 60);
     const parts: string[] = [];
     if (d > 0) {
       parts.push(`${d}d`);

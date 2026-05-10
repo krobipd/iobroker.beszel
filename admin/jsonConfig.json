@@ -26,9 +26,22 @@
                     "default": 60,
                     "xs": 12,
                     "sm": 12,
-                    "md": 4,
-                    "lg": 4,
-                    "xl": 4
+                    "md": 2,
+                    "lg": 2,
+                    "xl": 2
+                },
+                "requestTimeout": {
+                    "type": "number",
+                    "label": "label_requestTimeout",
+                    "help": "help_requestTimeout",
+                    "min": 5,
+                    "max": 120,
+                    "default": 15,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 2,
+                    "lg": 2,
+                    "xl": 2
                 },
                 "username": {
                     "type": "text",

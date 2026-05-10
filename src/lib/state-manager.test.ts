@@ -271,6 +271,39 @@ describe("StateManager", () => {
         });
     });
 
+    // SM5 v0.4.3 — name-collision disambiguation
+    describe("sanitizeWithSuffix + prepareForPoll (SM5 v0.4.3)", () => {
+        it("sanitizeWithSuffix appends a stable hash suffix", () => {
+            const a = manager.sanitizeWithSuffix("Server A", "id001");
+            const b = manager.sanitizeWithSuffix("Server A", "id002");
+            // Both start with the same base name…
+            expect(a.startsWith("server_a__")).to.equal(true);
+            expect(b.startsWith("server_a__")).to.equal(true);
+            // …but their suffix differs
+            expect(a).to.not.equal(b);
+            // …and the same input always yields the same suffix (stable across runs)
+            expect(manager.sanitizeWithSuffix("Server A", "id001")).to.equal(a);
+        });
+
+        it("prepareForPoll keeps bare name for unique systems (back-compat)", () => {
+            const sys1: BeszelSystem = { id: "alpha", name: "Server A", status: "up", host: "1.1.1.1", info: {} };
+            const sys2: BeszelSystem = { id: "beta", name: "Server B", status: "up", host: "1.1.1.2", info: {} };
+            manager.prepareForPoll([sys1, sys2]);
+            const map = (manager as unknown as { resolvedSafeNames: Map<string, string> }).resolvedSafeNames;
+            expect(map.get("alpha")).to.equal("server_a");
+            expect(map.get("beta")).to.equal("server_b");
+        });
+
+        it("prepareForPoll suffixes the LATER (id-sorted) collider, keeps the FIRST bare", () => {
+            const sysA: BeszelSystem = { id: "zid", name: "Server X", status: "up", host: "1.1.1.1", info: {} };
+            const sysB: BeszelSystem = { id: "aid", name: "Server X", status: "up", host: "1.1.1.2", info: {} };
+            manager.prepareForPoll([sysA, sysB]);
+            const map = (manager as unknown as { resolvedSafeNames: Map<string, string> }).resolvedSafeNames;
+            expect(map.get("aid")).to.equal("server_x");
+            expect(map.get("zid")).to.match(/^server_x__[0-9a-f]{6}$/);
+        });
+    });
+
     // -----------------------------------------------------------------------
     // updateSystem — device and basic states
     // -----------------------------------------------------------------------
