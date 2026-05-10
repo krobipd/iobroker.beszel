@@ -6,7 +6,7 @@
 
 **ioBroker Beszel Monitor** — Verbindet sich mit Beszel Hub (PocketBase) für Server-Monitoring.
 
-- **Version:** 0.4.1 (released 2026-05-07, npm latest) — README-Whitespace-Fix nach v0.4.0: alcalzone-iobroker-Plugin hatte beim Rotieren von 0.3.5 in CHANGELOG_OLD die Leerzeile zwischen `Older entries...`-Footer und `## Support` gefressen. Fix-Hook `Entwicklung/scripts/fix-changelog-footer.py` um Spacing-Normalisierung erweitert. v0.4.0 (2026-05-07) Multi-Language-Welle (14 LOG_STRINGS + 52 STATE_NAMES × 11 Sprachen, createdIds-Cache, errText-Zentralisierung, Node 22 baseline).
+- **Version:** 0.4.3 (released 2026-05-10, npm latest) — 26-Finding Hardening-Welle nach 4-Pass-Audit: B1 token-mutex (in-flight authPromise), B2 fetchAllPages pagination (PocketBase 200/500 cap weg), B3 429 transparent retry mit Retry-After, B4' 403 → distinct FORBIDDEN error class mit Hint, B5 admin requestTimeout (5–120s), B7 getLatestStats() simplified, B8 AbortController + cancelAll(), M1 process-handlers terminate(11), M2-M4 parallel cleanupMetrics+API+updateSystem, M5 validateHubUrl, M6 coercePollInterval (NaN-trap-fix), SM1-SM3 parallel cleanups+migration, SM4 defensive Set-iter, SM5 prepareForPoll mit Name-Kollision-Suffix, SM7 Math.floor(health), SM8 FS-percent-clamp, SM10 uptime-clamp, X1+X2 onUnload-cleanup. v0.4.2 (2026-05-09) Logs revert to English. v0.4.1 README-Whitespace-Hotfix. v0.4.0 Multi-Language + createdIds-Cache.
 - **GitHub:** https://github.com/krobipd/ioBroker.beszel
 - **npm:** https://www.npmjs.com/package/iobroker.beszel
 - **Repository PR:** ioBroker/ioBroker.repositories#5787
@@ -44,7 +44,7 @@ src/lib/types.ts         → TypeScript Interfaces (API + Config)
 
 20+ konfigurierbare Metriken (global für alle Systeme). Standard-on: uptime, cpu, loadAvg, memory, disk, diskSpeed, network, temperature. Alle anderen default off.
 
-## Tests (261 unit + 57 package + 1 integration)
+## Tests (262 unit + 57 package + 1 integration = 320)
 
 Tests leben seit v0.3.7 neben dem Source als `src/lib/*.test.ts` und laufen direkt via `ts-node/register` (offizieller `ioBroker.example/TypeScript`-Standard).
 
@@ -62,6 +62,7 @@ Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Call
 
 | Version | Highlights |
 |---------|------------|
+| 0.4.3 | 26-Finding 4-Pass-Hardening: token-mutex (B1) + pagination (B2) + 429-retry+Retry-After (B3) + 403-distinct-class (B4') + configurable timeout (B5) + AbortController/cancelAll (B8); main-parallel API/updates/cleanup (M2-M4) + URL-validate (M5) + pollInterval NaN-fix (M6) + terminate(11) (M1); state-mgr-parallel cleanups/migration (SM1-SM3) + defensive Set-iter (SM4) + name-collision suffix via FNV-1a-hash (SM5) + container.health Math.floor (SM7) + FS-percent clamp (SM8) + uptime clamp (SM10); onUnload abort + explicit catch (X1+X2). Tests 253→262. **Hardcore-Regel angewandt — alle 26 Findings umgesetzt, kein Filter.** |
 | 0.4.2 | Adapter logs zurück auf Englisch (mcm1957-Linie aus ioBroker.repositories#5667 — „log messages must be in english"). `lib/i18n-logs.ts` + `lib/i18n-logs.test.ts` gelöscht. 14 `tLog(...)`-Aufrufe in `main.ts` (12) und `state-manager.ts` (2) durch direkte EN-Template-Strings ersetzt. `systemLang`-Property aus `main.ts` und Constructor-Param aus `StateManager` entfernt — nicht mehr nötig, weil i18n-states via `tName()` Translation-Object liefert (Admin/vis machen Lookup automatisch). State-Namen in 11 Sprachen unverändert. |
 | 0.4.1 | README-Whitespace-Hotfix: Leerzeile zwischen Changelog-Footer und `## Support` wiederhergestellt (alcalzone-Plugin hatte sie beim Rotieren in v0.4.0 gefressen). Fix-Hook `fix-changelog-footer.py` um Spacing-Normalisierung erweitert — fängt jetzt beide Bug-Varianten (fehlend + zusammengeklebt) |
 | 0.4.0 | Multi-Language-Welle analog hassemu v1.28.0 / govee v2.6.0: `lib/i18n-logs.ts` (14 LOG_STRINGS × 11 Sprachen + tLog Helper), `lib/i18n-states.ts` (52 STATE_NAMES × 11 Sprachen + tName Helper). Alle State-Common-Factories auf `ioBroker.StringOrTranslated`, alle hardcoded EN-Strings via `tName('key')`. Lokaler `errText` aus main.ts in `lib/coerce.ts` zentralisiert (4 Inline-Patterns durch `errText`-Aufrufe ersetzt). `createdIds`-Set Cache spart pro Poll setObjectNotExistsAsync-Roundtrips. Baseline auf Node 22 + Admin >=7.8.23 + @types/node ^22.x + @tsconfig/node22, Deploy-Step PRE-EMPTIVE auf Node 24. *Log-Lokalisierung wurde in 0.4.2 zurückgebaut.* |
