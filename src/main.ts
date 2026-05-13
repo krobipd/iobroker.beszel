@@ -1,6 +1,7 @@
 import * as utils from "@iobroker/adapter-core";
 import { BeszelClient } from "./lib/beszel-client";
 import { errText } from "./lib/coerce";
+import { dispatchMessage, makeTestClientFactory } from "./lib/message-router";
 import { StateManager } from "./lib/state-manager";
 import type { AdapterConfig } from "./lib/types";
 
@@ -51,6 +52,13 @@ class BeszelAdapter extends utils.Adapter {
   private async onReady(): Promise<void> {
     const config = this.config as unknown as AdapterConfig;
 
+    // v0.4.4 (I1): onReady start anchor — debug log shows the config the
+    // adapter is starting with. Visible breadcrumb for "what URL is the
+    // adapter actually pointing at" without raising info-noise.
+    this.log.debug(
+      `onReady: starting (url='${config.url}', pollInterval=${JSON.stringify(config.pollInterval)}s, requestTimeout=${JSON.stringify(config.requestTimeout)}s)`,
+    );
+
     // `info` + `info.connection` are declared in io-package.json instanceObjects,
     // so the adapter framework creates them on install. Just set the initial state.
     await this.setStateAsync("info.connection", { val: false, ack: true });
@@ -72,7 +80,16 @@ class BeszelAdapter extends utils.Adapter {
 
     // v0.4.3 (B5): per-request timeout flows through from admin (default 15s).
     const timeoutMs = BeszelAdapter.coerceTimeoutMs(config.requestTimeout);
-    this.client = new BeszelClient(config.url, config.username, config.password, timeoutMs);
+    // v0.4.4 (I2): always-log resolved timeout. Detecting "drift" from raw
+    // is fragile (`"15"` → `15000` is coercion not drift); always-on log
+    // line keeps the resolution visible without false-flag logic.
+    this.log.debug(`timeoutMs: raw=${JSON.stringify(config.requestTimeout)} resolved=${timeoutMs}ms`);
+    // v0.4.4: pass adapter logger so the HTTP layer can trace request /
+    // auth / pagination lifecycle.
+    this.client = new BeszelClient(config.url, config.username, config.password, timeoutMs, {
+      debug: (m: string) => this.log.debug(m),
+      warn: (m: string) => this.log.warn(m),
+    });
     this.stateManager = new StateManager(this);
 
     // Migrate legacy flat state paths from pre-0.3.0
@@ -82,6 +99,8 @@ class BeszelAdapter extends utils.Adapter {
     // pointless serialisation of independent broker calls.
     const existingNames = await this.stateManager.getExistingSystemNames();
     await Promise.all(existingNames.map(name => this.stateManager!.cleanupMetrics(name, config)));
+    // v0.4.4 (G2): trace cleanupMetrics-summary after the parallel fan-out.
+    this.log.debug(`cleanupMetrics: ran for ${existingNames.length} existing system(s)`);
 
     // Initial poll
     await this.poll();
@@ -90,6 +109,8 @@ class BeszelAdapter extends utils.Adapter {
     // 1000` returns NaN, and `setInterval(fn, NaN)` becomes `setInterval(fn,
     // 0)` — a tight loop that hammers the Hub.
     const pollSec = BeszelAdapter.coercePollInterval(config.pollInterval);
+    // v0.4.4 (I3): always-log resolved poll interval (same reasoning as I2).
+    this.log.debug(`pollInterval: raw=${JSON.stringify(config.pollInterval)} resolved=${pollSec}s`);
     const intervalMs = pollSec * 1000;
     this.pollTimer = this.setInterval(() => {
       void this.poll();
@@ -172,43 +193,30 @@ class BeszelAdapter extends utils.Adapter {
       void this.setState("info.connection", { val: false, ack: true }).catch(() => {
         /* broker is shutting down */
       });
-    } catch {
-      // ignore
+    } catch (err) {
+      // v0.4.4 (I4): replace silent `// ignore` with a trace so shutdown
+      // errors leave a debug breadcrumb. Broker-already-down errors here
+      // are expected — debug-level keeps them out of the user log.
+      this.log.debug(`onUnload error (ignored): ${errText(err)}`);
     }
     callback();
   }
 
   private async onMessage(obj: ioBroker.Message): Promise<void> {
-    if (!obj.callback) {
-      return;
-    }
-    try {
-      if (obj.command === "checkConnection") {
-        const config = obj.message as Partial<AdapterConfig>;
-        const url = config.url ?? "";
-        const username = config.username ?? "";
-        const password = config.password ?? "";
-
-        if (!url || !username || !password) {
-          this.sendTo(
-            obj.from,
-            obj.command,
-            {
-              success: false,
-              message: "URL, username and password are required",
-            },
-            obj.callback,
-          );
-          return;
-        }
-
-        const testClient = new BeszelClient(url, username, password);
-        const result = await testClient.checkConnection();
-        this.sendTo(obj.from, obj.command, result, obj.callback);
-      }
-    } catch (err) {
-      this.sendTo(obj.from, obj.command, { success: false, message: errText(err) }, obj.callback);
-    }
+    // v0.4.4 (H1+H4): delegate to the pure `dispatchMessage` helper so the
+    // switch logic — including the default-Branch contract — is testable
+    // without an adapter-framework instance. See `lib/message-router.ts`.
+    await dispatchMessage(obj, {
+      log: {
+        debug: (m: string) => this.log.debug(m),
+        warn: (m: string) => this.log.warn(m),
+      },
+      sendTo: this.sendTo.bind(this),
+      createTestClient: makeTestClientFactory({
+        debug: (m: string) => this.log.debug(m),
+        warn: (m: string) => this.log.warn(m),
+      }),
+    });
   }
 
   /**
@@ -258,6 +266,9 @@ class BeszelAdapter extends utils.Adapter {
       return;
     }
 
+    // v0.4.4 (E1): poll-entry anchor with last-error-context + system count.
+    this.log.debug(`poll: starting (lastErrorCode='${this.lastErrorCode}', lastSystemCount=${this.lastSystemCount})`);
+
     this.isPolling = true;
     try {
       const config = this.config as unknown as AdapterConfig;
@@ -286,6 +297,10 @@ class BeszelAdapter extends utils.Adapter {
         systems.map(async system => {
           try {
             const stats = statsMap.get(system.id);
+            // v0.4.4 (F1): per-system entry. ~6 systems × 1440 polls/day at
+            // default 60s interval = ~8640 lines/day — acceptable at debug.
+            // Line stays short (name + truncated id + hasStats only).
+            this.log.debug(`updateSystem: '${system.name}' (id=${system.id.slice(0, 8)}, hasStats=${!!stats})`);
             await this.stateManager!.updateSystem(system, stats, containers, config);
             this.failedSystems.delete(system.name);
           } catch (err) {

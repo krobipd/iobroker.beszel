@@ -57,20 +57,26 @@ class BeszelClient {
    * every running request — called from `onUnload`.
    */
   inflight = /* @__PURE__ */ new Set();
+  /** v0.4.4: optional logger for the HTTP-layer / auth / pagination trace. */
+  log;
   /**
    * @param url Beszel Hub base URL, e.g. http://192.168.1.100:8090
    * @param username Login username
    * @param password Login password
    * @param timeoutMs Per-request HTTP timeout in milliseconds (default 15 000)
+   * @param log Optional adapter logger for HTTP/auth/pagination trace (v0.4.4)
    */
-  constructor(url, username, password, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  constructor(url, username, password, timeoutMs = DEFAULT_TIMEOUT_MS, log) {
     this.baseUrl = url.replace(/\/+$/, "");
     this.username = username;
     this.password = password;
     this.timeoutMs = timeoutMs > 0 ? timeoutMs : DEFAULT_TIMEOUT_MS;
+    this.log = log;
   }
   /** Force token re-authentication on the next request */
   invalidateToken() {
+    var _a;
+    (_a = this.log) == null ? void 0 : _a.debug("invalidateToken: cleared (forces fresh auth on next request)");
     this.token = null;
     this.tokenTime = 0;
   }
@@ -80,6 +86,8 @@ class BeszelClient {
    * 4-second kill deadline.
    */
   cancelAll() {
+    var _a;
+    (_a = this.log) == null ? void 0 : _a.debug(`cancelAll: aborting ${this.inflight.size} inflight requests`);
     for (const ctrl of this.inflight) {
       ctrl.abort();
     }
@@ -137,20 +145,25 @@ class BeszelClient {
   // Private helpers
   // -------------------------------------------------------------------------
   async ensureToken() {
+    var _a, _b;
     const now = Date.now();
     if (this.token && now - this.tokenTime < TOKEN_REFRESH_MS) {
       return;
     }
     if (this.authInFlight) {
+      (_a = this.log) == null ? void 0 : _a.debug("ensureToken: waiting for in-flight authenticate");
       await this.authInFlight;
       return;
     }
+    const tokenAge = this.token ? `${Date.now() - this.tokenTime}ms` : "none";
+    (_b = this.log) == null ? void 0 : _b.debug(`ensureToken: fresh authentication (previous token age=${tokenAge})`);
     this.authInFlight = this.authenticate().finally(() => {
       this.authInFlight = null;
     });
     await this.authInFlight;
   }
   async authenticate() {
+    var _a, _b;
     const body = JSON.stringify({
       identity: this.username,
       password: this.password
@@ -164,12 +177,14 @@ class BeszelClient {
     );
     const auth = (0, import_coerce.coerceAuthResponse)(raw);
     if (auth === null) {
+      (_a = this.log) == null ? void 0 : _a.debug("authenticate: response missing valid token (drift), throwing INVALID_AUTH_RESPONSE");
       const err = new Error("Auth response missing valid token");
       err.code = "INVALID_AUTH_RESPONSE";
       throw err;
     }
     this.token = auth.token;
     this.tokenTime = Date.now();
+    (_b = this.log) == null ? void 0 : _b.debug(`authenticate: success (token cached for ${TOKEN_REFRESH_MS}ms)`);
   }
   async fetchJson(path) {
     return this.request("GET", path, null, this.token);
@@ -183,6 +198,7 @@ class BeszelClient {
    * @param itemCoercer Per-item coercer; `null` items are dropped by the caller.
    */
   async fetchAllPages(path, itemCoercer) {
+    var _a, _b;
     const sep = path.includes("?") ? "&" : "?";
     const out = [];
     let totalPages = 1;
@@ -192,14 +208,22 @@ class BeszelClient {
       const list = (0, import_coerce.coercePocketBaseList)(raw, itemCoercer);
       out.push(...list.items);
       totalPages = list.totalPages > 0 ? list.totalPages : 1;
+      if (page > 1) {
+        (_a = this.log) == null ? void 0 : _a.debug(`fetchAllPages: page ${page}/${totalPages} for ${path}`);
+      }
       if (list.items.length === 0) {
         break;
       }
     }
+    if (totalPages > MAX_PAGES) {
+      (_b = this.log) == null ? void 0 : _b.warn(
+        `fetchAllPages: truncated at MAX_PAGES=${MAX_PAGES} (totalPages=${totalPages}, data may be incomplete) for ${path}`
+      );
+    }
     return out;
   }
   async request(method, path, body, token) {
-    var _a;
+    var _a, _b;
     try {
       return await this.requestOnce(method, path, body, token);
     } catch (err) {
@@ -209,16 +233,22 @@ class BeszelClient {
       }
       const retrySec = (_a = e.retryAfter) != null ? _a : 1;
       const sleep = Math.min(Math.max(1, retrySec), 30) * 1e3;
+      (_b = this.log) == null ? void 0 : _b.debug(`request: 429 retry for ${path}, sleeping ${sleep}ms`);
       await new Promise((resolve) => setTimeout(resolve, sleep));
       return this.requestOnce(method, path, body, token);
     }
   }
   requestOnce(method, path, body, token) {
+    var _a;
+    const startedAt = Date.now();
+    (_a = this.log) == null ? void 0 : _a.debug(`HTTP ${method} ${path}${body ? " (body)" : ""}`);
     return new Promise((resolve, reject) => {
+      var _a2;
       let parsedUrl;
       try {
         parsedUrl = new import_node_url.URL(this.baseUrl + path);
       } catch {
+        (_a2 = this.log) == null ? void 0 : _a2.debug(`HTTP invalid URL: ${this.baseUrl + path}`);
         reject(new Error(`Invalid URL: ${this.baseUrl + path}`));
         return;
       }
@@ -255,11 +285,11 @@ class BeszelClient {
         });
         res.on("data", (chunk) => chunks.push(chunk));
         res.on("end", () => {
-          var _a;
+          var _a3, _b, _c, _d;
           cleanup();
           const raw = Buffer.concat(chunks).toString("utf8");
           if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
-            const err = new Error(`HTTP ${(_a = res.statusCode) != null ? _a : "?"}: ${raw.slice(0, 200)}`);
+            const err = new Error(`HTTP ${(_a3 = res.statusCode) != null ? _a3 : "?"}: ${raw.slice(0, 200)}`);
             if (res.statusCode === 401) {
               err.code = "UNAUTHORIZED";
             } else if (res.statusCode === 429) {
@@ -276,12 +306,16 @@ class BeszelClient {
             } else {
               err.code = "HTTP_ERROR";
             }
+            (_b = this.log) == null ? void 0 : _b.debug(`HTTP ${method} ${path} \u2192 ${res.statusCode} ${err.code} (body=${raw.slice(0, 200)})`);
             reject(err);
             return;
           }
           try {
-            resolve(JSON.parse(raw));
+            const parsed = JSON.parse(raw);
+            (_c = this.log) == null ? void 0 : _c.debug(`HTTP ${method} ${path} \u2192 ${res.statusCode} (${Date.now() - startedAt}ms, ${raw.length}B)`);
+            resolve(parsed);
           } catch {
+            (_d = this.log) == null ? void 0 : _d.debug(`HTTP JSON parse fail ${path}: ${raw.slice(0, 200)}`);
             reject(new Error(`Invalid JSON response from ${path}`));
           }
         });
@@ -290,12 +324,16 @@ class BeszelClient {
         req.destroy(new Error("Request aborted"));
       });
       req.on("timeout", () => {
+        var _a3;
         req.destroy();
         cleanup();
+        (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP timeout ${method} ${path} (${Date.now() - startedAt}ms)`);
         reject(new Error(`Request to ${path} timed out`));
       });
       req.on("error", (err) => {
+        var _a3;
         cleanup();
+        (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP error ${method} ${path} (${Date.now() - startedAt}ms): ${err.message}`);
         reject(err);
       });
       if (body !== null) {

@@ -175,6 +175,10 @@ beszel.0.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+- Debug log traces previously silent paths: HTTP request lifecycle, token authentication, pagination walks and the 429-retry. Default log unchanged.
+- Test Connection in admin no longer hangs on an unknown command — it now gets a clear error response instead.
+
 ### 0.4.3 (2026-05-10)
 - Big setups (200+ servers / 500+ containers) now load completely instead of being silently truncated, and they start up noticeably faster — system updates, cleanups and the startup migration run in parallel.
 - New "Request timeout" setting in admin (5–120 s, default 15 s) for slow links or very large payloads.

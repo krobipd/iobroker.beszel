@@ -168,6 +168,7 @@ class StateManager {
       return;
     }
     const sysId = `systems.${safeName}`;
+    this.adapter.log.debug(`updateSystem state-tree: '${system.name}' \u2192 safeName='${safeName}'`);
     await this.adapter.extendObjectAsync(sysId, {
       type: "device",
       common: {
@@ -373,6 +374,9 @@ class StateManager {
     if (existingNames.length === 0) {
       return;
     }
+    this.adapter.log.debug(
+      `migrateLegacyStates: scanning ${existingNames.length} existing system(s) for legacy flat states`
+    );
     const legacyStates = [
       "online",
       "status",

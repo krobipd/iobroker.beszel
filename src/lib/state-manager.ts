@@ -176,6 +176,10 @@ export class StateManager {
       return;
     }
     const sysId = `systems.${safeName}`;
+    // v0.4.4 (G1): trace the state-tree entry (after safeName resolution but
+    // before any extendObjectAsync). Shows the name → safeName mapping —
+    // useful when collisions cause SM5 suffix-disambiguation.
+    this.adapter.log.debug(`updateSystem state-tree: '${system.name}' → safeName='${safeName}'`);
 
     // Create/update device object with online indicator
     await this.adapter.extendObjectAsync(sysId, {
@@ -420,6 +424,12 @@ export class StateManager {
     if (existingNames.length === 0) {
       return;
     }
+    // v0.4.4 (G4): trace the scan-start so the migration-summary at the end
+    // is anchored. If no states need migration, only this debug line fires;
+    // the existing info-summary stays silent.
+    this.adapter.log.debug(
+      `migrateLegacyStates: scanning ${existingNames.length} existing system(s) for legacy flat states`,
+    );
 
     // Old flat state IDs that moved into channels
     const legacyStates = [

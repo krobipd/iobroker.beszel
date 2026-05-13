@@ -3,6 +3,19 @@
     "name": "beszel",
     "version": "0.4.3",
     "news": {
+      "NEXT": {
+        "en": "Debug log traces previously silent paths: HTTP request lifecycle, token authentication, pagination walks and the 429-retry. Default log unchanged. Test Connection no longer hangs on unknown commands.",
+        "de": "Debug-Log dokumentiert stille Pfade: HTTP-Request-Lifecycle, Token-Authentifizierung, Pagination und 429-Retry. Default-Log unverändert. Test Connection hängt bei unbekannten Befehlen nicht mehr.",
+        "ru": "Журнал отладки прослеживает тихие пути: цикл HTTP-запроса, аутентификация по токену, пагинация и повтор после 429. Стандартный лог не изменился. Тест соединения больше не зависает.",
+        "pt": "Log de depuração rastreia caminhos silenciosos: ciclo HTTP, autenticação por token, paginação e retry após 429. Log padrão inalterado. Teste de conexão não trava em comandos desconhecidos.",
+        "nl": "Debug-log volgt stille paden: HTTP-cyclus, tokenauthenticatie, paginatie en 429-retry. Standaard log ongewijzigd. Test-verbinding blijft niet meer hangen bij onbekende opdrachten.",
+        "fr": "Le journal de débogage trace les chemins silencieux : cycle HTTP, authentification par jeton, pagination et nouvelle tentative 429. Test de connexion ne bloque plus sur commandes inconnues.",
+        "it": "Log di debug traccia percorsi silenziosi: ciclo HTTP, autenticazione token, paginazione e retry 429. Log predefinito invariato. Test connessione non si blocca su comandi sconosciuti.",
+        "es": "Log de depuración rastrea rutas silenciosas: ciclo HTTP, autenticación por token, paginación y reintento 429. Log por defecto sin cambios. Probar conexión ya no se cuelga con comandos desconocidos.",
+        "pl": "Log debugowania śledzi ciche ścieżki: przebieg HTTP, uwierzytelnianie tokenem, paginacja i ponowienie 429. Domyślny log bez zmian. Test połączenia nie zawiesza się przy nieznanych poleceniach.",
+        "uk": "Журнал зневадження відстежує тихі шляхи: цикл HTTP, автентифікація токеном, пагінація і повтор після 429. Стандартний лог без змін. Перевірка з'єднання більше не зависає.",
+        "zh-cn": "调试日志跟踪以前静默的路径：HTTP 请求生命周期、令牌认证、分页和 429 重试。默认日志保持不变。测试连接遇到未知命令时不再挂起。"
+      },
       "0.4.3": {
         "en": "Big setups load completely (no silent truncation past 200/500 records) and start up faster (parallel updates). Plus configurable request timeout, 429 retry, 403 hint, name-collision suffix.",
         "de": "Große Setups laden vollständig (kein stilles Abschneiden über 200/500 Datensätze) und starten schneller (parallel). Plus Timeout-Option, 429-Retry, 403-Hinweis, Suffix bei Namenskollision.",
@@ -80,19 +93,6 @@
         "pl": "Czyszczenie dokumentacji. Bez zmian w kodzie.",
         "uk": "Очищення документації. Без змін у коді.",
         "zh-cn": "文档清理。代码无变化。"
-      },
-      "0.3.8": {
-        "en": "Internal cleanup. No user-facing changes.",
-        "de": "Interne Bereinigung. Keine User-sichtbaren Änderungen.",
-        "ru": "Внутренняя очистка. Без видимых изменений для пользователя.",
-        "pt": "Limpeza interna. Sem alterações visíveis para o usuário.",
-        "nl": "Interne opschoning. Geen wijzigingen voor de gebruiker.",
-        "fr": "Nettoyage interne. Aucune modification visible pour l'utilisateur.",
-        "it": "Pulizia interna. Nessuna modifica visibile all'utente.",
-        "es": "Limpieza interna. Sin cambios visibles para el usuario.",
-        "pl": "Wewnętrzne porządki. Brak zmian widocznych dla użytkownika.",
-        "uk": "Внутрішнє прибирання. Без помітних для користувача змін.",
-        "zh-cn": "内部清理。对用户无可见变化。"
       }
     },
     "titleLang": {

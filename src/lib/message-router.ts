@@ -1,0 +1,113 @@
+import { BeszelClient, type BeszelClientLogger } from "./beszel-client";
+import { errText } from "./coerce";
+import type { AdapterConfig } from "./types";
+
+/**
+ * Dependencies the message router needs to dispatch an `onMessage`
+ * payload. Extracted as a pure interface so `dispatchMessage` is testable
+ * without an `ioBroker.Adapter`-instance.
+ *
+ * v0.4.4 (H4): the router exists primarily to lock the `default:`-branch
+ * contract via tests. See `reference_onmessage_default_branch.md` for the
+ * cross-adapter pattern and why a missing default leaves the caller
+ * callback hanging until ioBroker's ~5 s timeout.
+ */
+export interface MessageRouterDeps {
+  /** Adapter debug logger. */
+  log: {
+    debug(msg: string): void;
+    warn(msg: string): void;
+  };
+  /**
+   * ioBroker sendTo bound against the adapter instance.
+   *
+   * `callback` matches the ioBroker.Message shape (`MessageCallbackInfo`),
+   * not the executable `MessageCallback` — the adapter framework routes
+   * the response through this callback-info to the original caller.
+   */
+  sendTo: (
+    from: string,
+    command: string,
+    response: unknown,
+    callback: ioBroker.MessageCallbackInfo | undefined,
+  ) => void;
+  /**
+   * Factory for the throwaway BeszelClient used by `checkConnection`.
+   * Injected so the test can swap in a fake instead of a live HTTP client.
+   */
+  createTestClient: (url: string, username: string, password: string) => BeszelClient;
+}
+
+/**
+ * Build the standard test-client factory used in production. Wraps the
+ * adapter logger into the {@link BeszelClientLogger} shape and routes
+ * `debug`/`warn` through it.
+ *
+ * @param logger Adapter debug logger to forward into the BeszelClient.
+ */
+export function makeTestClientFactory(logger: BeszelClientLogger): MessageRouterDeps["createTestClient"] {
+  return (url, username, password) => new BeszelClient(url, username, password, undefined, logger);
+}
+
+/**
+ * Dispatch a single `ioBroker.Message`. Mirrors the previous inline
+ * switch in `main.ts:onMessage` 1:1 — entry-trace before the early-return
+ * so broadcast messages without callback are still visible at debug
+ * level, and an explicit `default:` branch so unknown commands get
+ * `{ error: "Unknown command" }` instead of leaving the callback hanging.
+ *
+ * @param obj The incoming message payload from the ioBroker framework.
+ * @param deps Test-injectable dependencies (logger + sendTo + client factory).
+ */
+export async function dispatchMessage(obj: ioBroker.Message, deps: MessageRouterDeps): Promise<void> {
+  // v0.4.4 (H1): entry log BEFORE the early-return — broadcast messages
+  // without callback wouldn't be visible otherwise.
+  deps.log.debug(`onMessage: command='${obj?.command}' from='${obj?.from}' has-callback=${!!obj?.callback}`);
+  if (!obj.callback) {
+    return;
+  }
+  try {
+    switch (obj.command) {
+      case "checkConnection": {
+        const config = obj.message as Partial<AdapterConfig>;
+        const url = config.url ?? "";
+        const username = config.username ?? "";
+        const password = config.password ?? "";
+
+        if (!url || !username || !password) {
+          // v0.4.4 (H2): trace missing-config before sendTo.
+          deps.log.debug("checkConnection: missing url/username/password in message");
+          deps.sendTo(
+            obj.from,
+            obj.command,
+            {
+              success: false,
+              message: "URL, username and password are required",
+            },
+            obj.callback,
+          );
+          return;
+        }
+
+        const testClient = deps.createTestClient(url, username, password);
+        const result = await testClient.checkConnection();
+        // v0.4.4 (H3): trace checkConnection result.
+        deps.log.debug(`checkConnection: result=${result.success ? "ok" : "fail"} (${result.message})`);
+        deps.sendTo(obj.from, obj.command, result, obj.callback);
+        break;
+      }
+      default:
+        // v0.4.4 (H4): **architecture fix** — switch had no default-Branch
+        // before, so any unknown command left `obj.callback` ungerufen
+        // until ioBroker timed out (~5s). Now: explicit error response.
+        // See `reference_onmessage_default_branch.md` for the pattern.
+        deps.log.debug(`onMessage: unknown command '${obj.command}'`);
+        deps.sendTo(obj.from, obj.command, { error: "Unknown command" }, obj.callback);
+    }
+  } catch (err) {
+    // v0.4.4 (H5): trace catch so the debug log shows what failed.
+    // The sendTo back to the caller is preserved unchanged.
+    deps.log.debug(`onMessage: '${obj.command}' failed: ${errText(err)}`);
+    deps.sendTo(obj.from, obj.command, { success: false, message: errText(err) }, obj.callback);
+  }
+}

@@ -24,6 +24,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_beszel_client = require("./lib/beszel-client");
 var import_coerce = require("./lib/coerce");
+var import_message_router = require("./lib/message-router");
 var import_state_manager = require("./lib/state-manager");
 class BeszelAdapter extends utils.Adapter {
   client = null;
@@ -63,6 +64,9 @@ class BeszelAdapter extends utils.Adapter {
   }
   async onReady() {
     const config = this.config;
+    this.log.debug(
+      `onReady: starting (url='${config.url}', pollInterval=${JSON.stringify(config.pollInterval)}s, requestTimeout=${JSON.stringify(config.requestTimeout)}s)`
+    );
     await this.setStateAsync("info.connection", { val: false, ack: true });
     if (!config.url || !config.username || !config.password) {
       this.log.error("URL, username, and password are required \u2014 please configure the adapter settings");
@@ -74,13 +78,19 @@ class BeszelAdapter extends utils.Adapter {
       return;
     }
     const timeoutMs = BeszelAdapter.coerceTimeoutMs(config.requestTimeout);
-    this.client = new import_beszel_client.BeszelClient(config.url, config.username, config.password, timeoutMs);
+    this.log.debug(`timeoutMs: raw=${JSON.stringify(config.requestTimeout)} resolved=${timeoutMs}ms`);
+    this.client = new import_beszel_client.BeszelClient(config.url, config.username, config.password, timeoutMs, {
+      debug: (m) => this.log.debug(m),
+      warn: (m) => this.log.warn(m)
+    });
     this.stateManager = new import_state_manager.StateManager(this);
     await this.stateManager.migrateLegacyStates();
     const existingNames = await this.stateManager.getExistingSystemNames();
     await Promise.all(existingNames.map((name) => this.stateManager.cleanupMetrics(name, config)));
+    this.log.debug(`cleanupMetrics: ran for ${existingNames.length} existing system(s)`);
     await this.poll();
     const pollSec = BeszelAdapter.coercePollInterval(config.pollInterval);
+    this.log.debug(`pollInterval: raw=${JSON.stringify(config.pollInterval)} resolved=${pollSec}s`);
     const intervalMs = pollSec * 1e3;
     this.pollTimer = this.setInterval(() => {
       void this.poll();
@@ -154,40 +164,23 @@ class BeszelAdapter extends utils.Adapter {
       }
       void this.setState("info.connection", { val: false, ack: true }).catch(() => {
       });
-    } catch {
+    } catch (err) {
+      this.log.debug(`onUnload error (ignored): ${(0, import_coerce.errText)(err)}`);
     }
     callback();
   }
   async onMessage(obj) {
-    var _a, _b, _c;
-    if (!obj.callback) {
-      return;
-    }
-    try {
-      if (obj.command === "checkConnection") {
-        const config = obj.message;
-        const url = (_a = config.url) != null ? _a : "";
-        const username = (_b = config.username) != null ? _b : "";
-        const password = (_c = config.password) != null ? _c : "";
-        if (!url || !username || !password) {
-          this.sendTo(
-            obj.from,
-            obj.command,
-            {
-              success: false,
-              message: "URL, username and password are required"
-            },
-            obj.callback
-          );
-          return;
-        }
-        const testClient = new import_beszel_client.BeszelClient(url, username, password);
-        const result = await testClient.checkConnection();
-        this.sendTo(obj.from, obj.command, result, obj.callback);
-      }
-    } catch (err) {
-      this.sendTo(obj.from, obj.command, { success: false, message: (0, import_coerce.errText)(err) }, obj.callback);
-    }
+    await (0, import_message_router.dispatchMessage)(obj, {
+      log: {
+        debug: (m) => this.log.debug(m),
+        warn: (m) => this.log.warn(m)
+      },
+      sendTo: this.sendTo.bind(this),
+      createTestClient: (0, import_message_router.makeTestClientFactory)({
+        debug: (m) => this.log.debug(m),
+        warn: (m) => this.log.warn(m)
+      })
+    });
   }
   /**
    * Classify an error for deduplication and log-level decisions.
@@ -225,6 +218,7 @@ class BeszelAdapter extends utils.Adapter {
     if (!this.client || !this.stateManager) {
       return;
     }
+    this.log.debug(`poll: starting (lastErrorCode='${this.lastErrorCode}', lastSystemCount=${this.lastSystemCount})`);
     this.isPolling = true;
     try {
       const config = this.config;
@@ -239,6 +233,7 @@ class BeszelAdapter extends utils.Adapter {
         systems.map(async (system) => {
           try {
             const stats = statsMap.get(system.id);
+            this.log.debug(`updateSystem: '${system.name}' (id=${system.id.slice(0, 8)}, hasStats=${!!stats})`);
             await this.stateManager.updateSystem(system, stats, containers, config);
             this.failedSystems.delete(system.name);
           } catch (err) {

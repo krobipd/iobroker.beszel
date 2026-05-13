@@ -13,6 +13,20 @@ import type { BeszelContainer, BeszelSystem, SystemStats } from "./types";
 
 const TOKEN_REFRESH_MS = 23 * 60 * 60 * 1000; // 23 hours
 const DEFAULT_TIMEOUT_MS = 15_000;
+
+/**
+ * v0.4.4: optional logger injected by the adapter so the HTTP client can
+ * trace its own request/response lifecycle, token-auth path, pagination
+ * walk and 429-retry behaviour. When omitted (e.g. in tests), every
+ * `this.log?.debug(...)` call is a no-op — keeps the existing positional
+ * signature backward-compatible.
+ */
+export interface BeszelClientLogger {
+  /** Adapter debug log. Called at most once per request/auth/page decision. */
+  debug(message: string): void;
+  /** Adapter warn log. Called only for `MAX_PAGES` truncation (rare). */
+  warn(message: string): void;
+}
 /**
  * v0.4.3 (B2): pagination size per page. PocketBase caps perPage at 500;
  * we use 200 and follow `totalPages` to fetch the rest.
@@ -44,23 +58,37 @@ export class BeszelClient {
    * every running request — called from `onUnload`.
    */
   private readonly inflight = new Set<AbortController>();
+  /** v0.4.4: optional logger for the HTTP-layer / auth / pagination trace. */
+  private readonly log?: BeszelClientLogger;
 
   /**
    * @param url Beszel Hub base URL, e.g. http://192.168.1.100:8090
    * @param username Login username
    * @param password Login password
    * @param timeoutMs Per-request HTTP timeout in milliseconds (default 15 000)
+   * @param log Optional adapter logger for HTTP/auth/pagination trace (v0.4.4)
    */
-  constructor(url: string, username: string, password: string, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  constructor(
+    url: string,
+    username: string,
+    password: string,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    log?: BeszelClientLogger,
+  ) {
     // Strip trailing slash
     this.baseUrl = url.replace(/\/+$/, "");
     this.username = username;
     this.password = password;
     this.timeoutMs = timeoutMs > 0 ? timeoutMs : DEFAULT_TIMEOUT_MS;
+    this.log = log;
   }
 
   /** Force token re-authentication on the next request */
   public invalidateToken(): void {
+    // v0.4.4 (B5): trace the explicit invalidation — usually called from the
+    // poll-loop after a 401, so this is the breadcrumb that connects "auth
+    // failure" to "fresh-auth attempt on next request".
+    this.log?.debug("invalidateToken: cleared (forces fresh auth on next request)");
     this.token = null;
     this.tokenTime = 0;
   }
@@ -71,6 +99,8 @@ export class BeszelClient {
    * 4-second kill deadline.
    */
   public cancelAll(): void {
+    // v0.4.4 (A12): trace shutdown anchor with the count of aborts.
+    this.log?.debug(`cancelAll: aborting ${this.inflight.size} inflight requests`);
     for (const ctrl of this.inflight) {
       ctrl.abort();
     }
@@ -140,12 +170,24 @@ export class BeszelClient {
   private async ensureToken(): Promise<void> {
     const now = Date.now();
     if (this.token && now - this.tokenTime < TOKEN_REFRESH_MS) {
+      // v0.4.4: cache-hit deliberately NOT logged — runs on every request,
+      // would flood the debug log with no diagnostic value.
       return;
     }
     if (this.authInFlight) {
+      // v0.4.4 (B1): trace concurrent-request wait. Diagnostically wertvoll
+      // weil B1 (token-mutex) garantiert dass mehrere parallel-Requests
+      // sich EINE auth-Roundtrip teilen — bei Bug-Report "weird auth burst"
+      // erkennt der Maintainer ob der mutex greift.
+      this.log?.debug("ensureToken: waiting for in-flight authenticate");
       await this.authInFlight;
       return;
     }
+    // v0.4.4 (B2): trace fresh-auth start with token-age (oder "none" wenn
+    // noch keiner da war). Maintainer sieht "token expired after 23h" oder
+    // "no token yet (first request)" eindeutig.
+    const tokenAge = this.token ? `${Date.now() - this.tokenTime}ms` : "none";
+    this.log?.debug(`ensureToken: fresh authentication (previous token age=${tokenAge})`);
     this.authInFlight = this.authenticate().finally(() => {
       this.authInFlight = null;
     });
@@ -167,12 +209,18 @@ export class BeszelClient {
 
     const auth = coerceAuthResponse(raw);
     if (auth === null) {
+      // v0.4.4 (B4): trace API-drift in the auth response (e.g. PocketBase
+      // schema change, partial response). Without this the throw lands as
+      // a generic INVALID_AUTH_RESPONSE without anchor for what was missing.
+      this.log?.debug("authenticate: response missing valid token (drift), throwing INVALID_AUTH_RESPONSE");
       const err = new Error("Auth response missing valid token");
       (err as NodeJS.ErrnoException).code = "INVALID_AUTH_RESPONSE";
       throw err;
     }
     this.token = auth.token;
     this.tokenTime = Date.now();
+    // v0.4.4 (B3): trace successful authentication with the cache-window.
+    this.log?.debug(`authenticate: success (token cached for ${TOKEN_REFRESH_MS}ms)`);
   }
 
   private async fetchJson<T>(path: string): Promise<T> {
@@ -197,9 +245,22 @@ export class BeszelClient {
       const list = coercePocketBaseList(raw, itemCoercer);
       out.push(...list.items);
       totalPages = list.totalPages > 0 ? list.totalPages : 1;
+      // v0.4.4 (C1): trace multi-page walk (page 2+). Single-page setups
+      // stay silent — only big installs (>200 records) emit one line per page.
+      if (page > 1) {
+        this.log?.debug(`fetchAllPages: page ${page}/${totalPages} for ${path}`);
+      }
       if (list.items.length === 0) {
         break;
       }
+    }
+    // v0.4.4 (C2): warn (not debug) when totalPages exceeds MAX_PAGES — the
+    // returned list is truncated, so users with 200+ system installs would
+    // silently lose data. Rare event (>10k records), no spam-risk at warn.
+    if (totalPages > MAX_PAGES) {
+      this.log?.warn(
+        `fetchAllPages: truncated at MAX_PAGES=${MAX_PAGES} (totalPages=${totalPages}, data may be incomplete) for ${path}`,
+      );
     }
     return out;
   }
@@ -215,17 +276,29 @@ export class BeszelClient {
       }
       const retrySec = e.retryAfter ?? 1;
       const sleep = Math.min(Math.max(1, retrySec), 30) * 1000;
+      // v0.4.4 (D1): trace the 429-retry path so the Hub-rate-limit handling
+      // is visible (without this only the main.ts classifyError-warn fires
+      // when both attempts fail).
+      this.log?.debug(`request: 429 retry for ${path}, sleeping ${sleep}ms`);
       await new Promise(resolve => setTimeout(resolve, sleep));
       return this.requestOnce<T>(method, path, body, token);
     }
   }
 
   private requestOnce<T>(method: string, path: string, body: string | null, token: string | null): Promise<T> {
+    // v0.4.4 (A0): start timestamp for elapsed-ms in success/timeout/error
+    // log lines. 1 LOC, no behavior change.
+    const startedAt = Date.now();
+    // v0.4.4 (A1): trace request entry. Cadence ~4 calls/poll × 1440 polls
+    // /day at default 60s interval = ~5760 lines/day — acceptable at debug.
+    this.log?.debug(`HTTP ${method} ${path}${body ? " (body)" : ""}`);
     return new Promise((resolve, reject) => {
       let parsedUrl: URL;
       try {
         parsedUrl = new URL(this.baseUrl + path);
       } catch {
+        // v0.4.4 (A10): trace invalid-URL drift before throwing.
+        this.log?.debug(`HTTP invalid URL: ${this.baseUrl + path}`);
         reject(new Error(`Invalid URL: ${this.baseUrl + path}`));
         return;
       }
@@ -295,29 +368,46 @@ export class BeszelClient {
             } else {
               err.code = "HTTP_ERROR";
             }
+            // v0.4.4 (A3): trace 4xx/5xx with status + error-code + body-snippet.
+            // Covers A4 (429) too via err.code=RATE_LIMITED + retryAfter visible
+            // in the err object's stringification context.
+            this.log?.debug(`HTTP ${method} ${path} → ${res.statusCode} ${err.code} (body=${raw.slice(0, 200)})`);
             reject(err);
             return;
           }
           try {
-            resolve(JSON.parse(raw) as T);
+            const parsed = JSON.parse(raw) as T;
+            // v0.4.4 (A2): trace successful response with elapsed-ms + bytes.
+            this.log?.debug(`HTTP ${method} ${path} → ${res.statusCode} (${Date.now() - startedAt}ms, ${raw.length}B)`);
+            resolve(parsed);
           } catch {
+            // v0.4.4 (A8): trace JSON parse-fail with body-snippet.
+            this.log?.debug(`HTTP JSON parse fail ${path}: ${raw.slice(0, 200)}`);
             reject(new Error(`Invalid JSON response from ${path}`));
           }
         });
       });
 
       ctrl.signal.addEventListener("abort", () => {
+        // v0.4.4: A6 deliberately omitted — `req.destroy(Error)` propagates
+        // through `req.on("error")` below where A7 already logs it.
         req.destroy(new Error("Request aborted"));
       });
 
       req.on("timeout", () => {
         req.destroy();
         cleanup();
+        // v0.4.4 (A5): trace timeout with elapsed.
+        this.log?.debug(`HTTP timeout ${method} ${path} (${Date.now() - startedAt}ms)`);
         reject(new Error(`Request to ${path} timed out`));
       });
 
       req.on("error", err => {
         cleanup();
+        // v0.4.4 (A7): trace network / abort / TLS / DNS errors with elapsed.
+        // Also catches the abort case (req.destroy(Error("Request aborted")))
+        // — A6 deliberately not emitted to avoid double-log.
+        this.log?.debug(`HTTP error ${method} ${path} (${Date.now() - startedAt}ms): ${err.message}`);
         reject(err);
       });
 
