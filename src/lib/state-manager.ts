@@ -1,4 +1,5 @@
 import type * as utils from "@iobroker/adapter-core";
+import { errText } from "./coerce";
 import { tName } from "./i18n-states";
 import type { AdapterConfig, BeszelContainer, BeszelSystem, SystemStats } from "./types";
 
@@ -189,7 +190,7 @@ export class StateManager {
         statusStates: {
           onlineId: `${this.adapter.namespace}.${sysId}.info.online`,
         },
-      } as ioBroker.DeviceCommon,
+      },
       native: { id: system.id, host: system.host },
     });
 
@@ -795,8 +796,11 @@ export class StateManager {
         await this.adapter.delObjectAsync(id, { recursive: true });
         this.dropCacheUnder(id);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      // v0.5.0 (S2): silent-catch ersetzt durch debug-Trace. Broker-already-down
+      // or "object does not exist" are expected here — keep them out of the
+      // user log but leave a breadcrumb for diagnostics.
+      this.adapter.log.debug(`deleteChannelIfExists(${id}) ignored: ${errText(err)}`);
     }
   }
 

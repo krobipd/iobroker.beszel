@@ -17,6 +17,11 @@
 		// This is necessary for the automatic typing of the adapter config
 		"resolveJsonModule": true,
 
+		// v0.5.0 (P6): TS 6 zieht keine @types/* mehr automatisch — explizit
+		// vitest/globals (für `describe`/`it`/`expect`-Globals in *.test.ts)
+		// plus node (für `node:http`/`node:url`/`Buffer`-Globals).
+		"types": ["vitest/globals", "node"],
+
 		"sourceMap": true,
 		"inlineSourceMap": false
 	},

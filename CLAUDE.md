@@ -6,23 +6,26 @@
 
 **ioBroker Beszel Monitor** — Verbindet sich mit Beszel Hub (PocketBase) für Server-Monitoring.
 
-- **Version:** 0.4.5 (released 2026-05-14, npm latest) — testClient cancelAll-Latency-Fix: short-lived `testClient` aus `checkConnection`-message wird via `this.testClients = new Set<BeszelClient>()` getrackt + im `onUnload` mit aborted. Vorher: `this.client.cancelAll()` aktiv aber testClient blieb hängen → konnte Adapter über js-controller's 4s-Kill-Deadline halten. `MessageRouterDeps` um `onTestClientCreated`/`onTestClientDone`-Hooks erweitert (test-lockable). 3 neue regression-tests in `message-router.test.ts` (register-then-deregister + finally-on-throw + missing-config skips both hooks). Test count 268→271. Cross-Adapter parallel zu parcelapp v0.4.4 (identisches Pattern). Identified during v0.4.4 audit als out-of-scope — Krobi-Korrektur: „nimm zusätzliche findings mit in den release", Lesson festgehalten in `feedback_low_ist_kein_skip` (Verstoß 4). v0.4.4 (2026-05-14) Debug-Coverage-Welle nach 9-Klassen-Audit (3114 LOC + 24 Sites). Score 3.8→9.0, 9/9 Klassen auf 9/10. Reine `log.debug`-Inserts plus optionaler `BeszelClientLogger`-Param (5. positional, class-member `this.log?`) + Architektur-Fix H4 (onMessage default-Branch) + `lib/message-router.ts`-Refactor für Test-Lockability + 6 message-router-Tests (262→268 unit). A0-A12 ohne A6 HTTPS-Trace; B1-B5 Token-Lifecycle; C1+C2 (warn bei MAX_PAGES); D1 429-retry-trace; E1+F1 Polling-Anchors; G1+G2+G4 state-manager; H1-H5 sendTo komplett inkl. H4 default-Branch; I1-I4 Lifecycle. Plus README header-icon raw→jsdelivr nicht nötig (svg-link existiert nicht im README — Logo via raw funktioniert für beszel SVG). v0.4.3 (released 2026-05-10) 26-Finding Hardening-Welle nach 4-Pass-Audit: B1 token-mutex (in-flight authPromise), B2 fetchAllPages pagination (PocketBase 200/500 cap weg), B3 429 transparent retry mit Retry-After, B4' 403 → distinct FORBIDDEN error class mit Hint, B5 admin requestTimeout (5–120s), B7 getLatestStats() simplified, B8 AbortController + cancelAll(), M1 process-handlers terminate(11), M2-M4 parallel cleanupMetrics+API+updateSystem, M5 validateHubUrl, M6 coercePollInterval (NaN-trap-fix), SM1-SM3 parallel cleanups+migration, SM4 defensive Set-iter, SM5 prepareForPoll mit Name-Kollision-Suffix, SM7 Math.floor(health), SM8 FS-percent-clamp, SM10 uptime-clamp, X1+X2 onUnload-cleanup. v0.4.2 (2026-05-09) Logs revert to English. v0.4.1 README-Whitespace-Hotfix. v0.4.0 Multi-Language + createdIds-Cache.
+- **Version:** 0.5.0 (released 2026-05-17) — Toolchain + Sicherheits-Hardening. Beszel-Hub-`username` wird jetzt verschlüsselt im Object-DB gespeichert (zusätzlich zum bereits encrypted `password`); eine einmalige Auto-Migration in `onReady` erkennt Klartext-User aus v0.4.x-Installationen via Heuristik (`@`/Whitespace/Nicht-Hex/ungerade Hex-Länge) und re-encryptiert mit `adapter.encrypt()`. README dokumentiert jetzt das `requestTimeout`-Feld (5-120s, default 15). `instanceObjects.common.name` für `info`/`info.connection`/`systems` werden deterministisch aus `src/lib/i18n-states.ts` generiert — neue `scripts/sync-iopackage-from-i18n.py` als Pre-commit-Hook macht Drift strukturell unmöglich (Hassemu-v1.32.2-B3-Pattern). Test-Runner mocha+ts-node → **vitest** (analog govee v2.6.4 / hassemu v1.32.0, ESM-Loader-Bug strukturell weg). Toolchain-Bump: TypeScript ~5.9.3 → **~6.0.3** + `@iobroker/eslint-config` 2.3.4 + `@iobroker/types` 7.1.2 + `@alcalzone/release-script` 5.2.0 (+ 2 Plugins). `tsconfig.json:types: ["vitest/globals", "node"]`. Code-Stil: `validateHubUrl`/`coercePollInterval`/`coerceTimeoutMs` von `private static`-Methoden in `main.ts` nach `lib/coerce.ts` extrahiert (testable als reine Funktionen); `coercePollInterval` jetzt mit Upper-Clamp 300s (matched admin/jsonConfig max — schützt gegen API-Direct-Sets); `deleteChannelIfExists` silent-catch ersetzt durch `debug`-Trace; `dispatchMessage`-`obj.message`-Härtung via `coerceObject` (Null/String/Array führen jetzt zu „missing fields" statt Throw). +30 unit-Tests (271→301): 14 für validateHubUrl/coercePollInterval/coerceTimeoutMs, 3 für dispatchMessage-obj.message-Härtung, 13 für credential-migration. **Vorgänger 0.4.5** (released 2026-05-14) — testClient cancelAll-Latency-Fix: short-lived `testClient` aus `checkConnection`-message wird via `this.testClients = new Set<BeszelClient>()` getrackt + im `onUnload` mit aborted. Vorher: `this.client.cancelAll()` aktiv aber testClient blieb hängen → konnte Adapter über js-controller's 4s-Kill-Deadline halten. `MessageRouterDeps` um `onTestClientCreated`/`onTestClientDone`-Hooks erweitert (test-lockable). 3 neue regression-tests in `message-router.test.ts` (register-then-deregister + finally-on-throw + missing-config skips both hooks). Test count 268→271. Cross-Adapter parallel zu parcelapp v0.4.4 (identisches Pattern). Identified during v0.4.4 audit als out-of-scope — Krobi-Korrektur: „nimm zusätzliche findings mit in den release", Lesson festgehalten in `feedback_low_ist_kein_skip` (Verstoß 4). v0.4.4 (2026-05-14) Debug-Coverage-Welle nach 9-Klassen-Audit (3114 LOC + 24 Sites). Score 3.8→9.0, 9/9 Klassen auf 9/10. Reine `log.debug`-Inserts plus optionaler `BeszelClientLogger`-Param (5. positional, class-member `this.log?`) + Architektur-Fix H4 (onMessage default-Branch) + `lib/message-router.ts`-Refactor für Test-Lockability + 6 message-router-Tests (262→268 unit). A0-A12 ohne A6 HTTPS-Trace; B1-B5 Token-Lifecycle; C1+C2 (warn bei MAX_PAGES); D1 429-retry-trace; E1+F1 Polling-Anchors; G1+G2+G4 state-manager; H1-H5 sendTo komplett inkl. H4 default-Branch; I1-I4 Lifecycle. Plus README header-icon raw→jsdelivr nicht nötig (svg-link existiert nicht im README — Logo via raw funktioniert für beszel SVG). v0.4.3 (released 2026-05-10) 26-Finding Hardening-Welle nach 4-Pass-Audit: B1 token-mutex (in-flight authPromise), B2 fetchAllPages pagination (PocketBase 200/500 cap weg), B3 429 transparent retry mit Retry-After, B4' 403 → distinct FORBIDDEN error class mit Hint, B5 admin requestTimeout (5–120s), B7 getLatestStats() simplified, B8 AbortController + cancelAll(), M1 process-handlers terminate(11), M2-M4 parallel cleanupMetrics+API+updateSystem, M5 validateHubUrl, M6 coercePollInterval (NaN-trap-fix), SM1-SM3 parallel cleanups+migration, SM4 defensive Set-iter, SM5 prepareForPoll mit Name-Kollision-Suffix, SM7 Math.floor(health), SM8 FS-percent-clamp, SM10 uptime-clamp, X1+X2 onUnload-cleanup. v0.4.2 (2026-05-09) Logs revert to English. v0.4.1 README-Whitespace-Hotfix. v0.4.0 Multi-Language + createdIds-Cache.
 - **GitHub:** https://github.com/krobipd/ioBroker.beszel
 - **npm:** https://www.npmjs.com/package/iobroker.beszel
 - **Repository PR:** ioBroker/ioBroker.repositories#5787
 - **Runtime-Deps:** nur `@iobroker/adapter-core` (HTTP via Node.js built-in)
-- **Test-Setup:** offizieller ioBroker.example/TypeScript-Standard — Tests unter `src/lib/*.test.ts` direkt mit `ts-node/register`, kein separater Build (siehe globales `reference_iobroker_test_setup_standard`)
+- **Test-Setup:** Tests unter `src/lib/*.test.ts` direkt via **vitest** (seit v0.5.0; vorher mocha+ts-node, vitest löst den ESM-Loader-Bug strukturell und ist ~10× schneller). `test/package.js` + `test/integration.js` bleiben mocha (`@iobroker/testing` ist mocha-only).
 - **`@types/node` an `engines.node`-Min gekoppelt:** `^22.x` weil `engines.node: ">=22"`. Dependabot ignoriert Major-Bumps
 
 ## Architektur
 
 ```
-src/main.ts              → Adapter (Lifecycle, Polling, Message-Handler)
-src/lib/beszel-client.ts → HTTP Client (Auth, Systems, Stats, Containers)
-src/lib/coerce.ts        → Boundary-Validator (NaN/Infinity/Typ-Drift) + errText-Helper
-src/lib/state-manager.ts → ioBroker States erstellen/updaten/cleanup, createdIds-Cache
-src/lib/i18n-states.ts   → 52 STATE_NAMES × 11 Sprachen + tName(key) Translation-Object
-src/lib/types.ts         → TypeScript Interfaces (API + Config)
+src/main.ts                     → Adapter (Lifecycle, Polling, Message-Handler)
+src/lib/beszel-client.ts        → HTTP Client (Auth, Systems, Stats, Containers)
+src/lib/coerce.ts               → Boundary-Validator (NaN/Infinity/Typ-Drift) + errText + validateHubUrl + coercePollInterval/coerceTimeoutMs (v0.5.0 S1)
+src/lib/state-manager.ts        → ioBroker States erstellen/updaten/cleanup, createdIds-Cache
+src/lib/i18n-states.ts          → 54 STATE_NAMES × 11 Sprachen + tName(key) Translation-Object (v0.5.0: +connectionStatus + channelSystems als single-source-of-truth für instanceObjects)
+src/lib/credential-migration.ts → v0.5.0 B4: 1-time Auto-Migration für Klartext-username → encrypted
+src/lib/message-router.ts       → onMessage-Dispatcher (default-Branch-Contract, v0.4.5 testClient-Hooks)
+src/lib/types.ts                → TypeScript Interfaces (API + Config)
+scripts/sync-iopackage-from-i18n.py → v0.5.0 B3: regeneriert io-package.json:instanceObjects.common.name aus i18n-states.ts
 ```
 
 ## Design-Entscheidungen
@@ -44,16 +47,18 @@ src/lib/types.ts         → TypeScript Interfaces (API + Config)
 
 20+ konfigurierbare Metriken (global für alle Systeme). Standard-on: uptime, cpu, loadAvg, memory, disk, diskSpeed, network, temperature. Alle anderen default off.
 
-## Tests (262 unit + 57 package + 1 integration = 320)
+## Tests (301 unit + 57 package + 1 integration = 359)
 
-Tests leben seit v0.3.7 neben dem Source als `src/lib/*.test.ts` und laufen direkt via `ts-node/register` (offizieller `ioBroker.example/TypeScript`-Standard).
+Tests leben seit v0.3.7 neben dem Source als `src/lib/*.test.ts` und laufen direkt via **vitest** (seit v0.5.0; vorher mocha+ts-node, vitest löst den ESM-Loader-Bug strukturell und ist ~10× schneller).
 
 ```
-src/lib/coerce.test.ts         → Boundary-Validator (Primitive + Beszel-Shapes) + errText
-src/lib/beszel-client.test.ts  → API Client (Auth, Token, Errors, Responses, API-Drift)
-src/lib/state-manager.test.ts  → StateManager + Translation-Objects + createdIds-Cache
-test/package.js                → @iobroker/testing Package-Tests
-test/integration.js            → @iobroker/testing Integration-Tests
+src/lib/coerce.test.ts                → Boundary-Validator (Primitive + Beszel-Shapes) + errText + validateHubUrl + coercePollInterval/coerceTimeoutMs
+src/lib/beszel-client.test.ts         → API Client (Auth, Token, Errors, Responses, API-Drift)
+src/lib/state-manager.test.ts         → StateManager + Translation-Objects + createdIds-Cache
+src/lib/message-router.test.ts        → dispatchMessage (default-Branch + obj.message-Härtung + test-client-Hooks)
+src/lib/credential-migration.test.ts  → looksLikePlaintextUsername + migrateUsernameEncryption (v0.5.0 B4)
+test/package.js                       → @iobroker/testing Package-Tests
+test/integration.js                   → @iobroker/testing Integration-Tests
 ```
 
 Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Callback-API).
@@ -62,6 +67,7 @@ Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Call
 
 | Version | Highlights |
 |---------|------------|
+| 0.5.0 | **Sicherheit + Toolchain.** `username` jetzt encrypted im Object-DB (zus. zum bereits encrypted `password`); 1-time Auto-Migration in onReady erkennt Klartext aus v0.4.x via Heuristik (@/Whitespace/Nicht-Hex/ungerade Länge) und re-encrypted mit `adapter.encrypt()`. README dokumentiert jetzt `requestTimeout` (5-120s). `info`/`info.connection`/`systems` instanceObjects-Translations werden ab jetzt deterministisch aus `src/lib/i18n-states.ts` generiert — neue `scripts/sync-iopackage-from-i18n.py` als Pre-commit-Hook (Hassemu-v1.32.2-B3-Pattern). Test-Runner mocha+ts-node → **vitest** (analog govee v2.6.4 / hassemu v1.32.0). Toolchain: TypeScript ~5.9.3 → **~6.0.3** + `@iobroker/eslint-config` 2.3.4 + `@iobroker/types` 7.1.2 + `@alcalzone/release-script` 5.2.0 (+ 2 Plugins). `tsconfig.json:types: ["vitest/globals", "node"]`. Code-Stil: `validateHubUrl`/`coercePollInterval`/`coerceTimeoutMs` aus `main.ts` nach `lib/coerce.ts` extrahiert; `coercePollInterval` mit Upper-Clamp 300s; `deleteChannelIfExists` silent-catch → debug-Trace; `dispatchMessage`-`obj.message`-Härtung via `coerceObject`. +30 unit-Tests (271→301). `nyc` + `source-map-support` + `ts-node` aus devDeps raus. |
 | 0.4.5 | **testClient cancelAll-Latency-Fix:** short-lived `testClient` aus `checkConnection` admin-message wird via `this.testClients = new Set<BeszelClient>()` getrackt + im `onUnload` mit aborted. Vorher: `this.client.cancelAll()` aktiv aber testClient-inflight blieb hängen → konnte Adapter über js-controller's 4s-Kill-Deadline halten. `MessageRouterDeps` um optional `onTestClientCreated`/`onTestClientDone`-Hooks erweitert für Test-Lockability. `dispatchMessage`-checkConnection wrappt `testClient.checkConnection()` in try/finally damit deregistration auch bei throw läuft. 3 neue Regression-Tests in `message-router.test.ts` (register-then-deregister Symmetrie + finally-on-throw + missing-config skips both hooks). Cross-Adapter parallel zu parcelapp v0.4.4 (identisches Pattern, gleicher Fix). Identified during v0.4.4 audit als out-of-scope — Krobi-Korrektur „nimm zusätzliche findings mit in den release", Lesson festgehalten in `feedback_low_ist_kein_skip` (Verstoß 4). Test count 268→271 unit |
 | 0.4.4 | **Debug-Coverage-Welle** nach 9-Klassen-Audit (3114 LOC + 24 Sites). Score 3.8→9.0, 9/9 Klassen auf 9/10. Reine `log.debug`-Inserts in 3 src-Files + optionaler `BeszelClientLogger`-Param (5. positional + class-member `this.log?`): A0 startedAt + A1-A12 (ohne A6) HTTPS-Layer inkl. body-snippet + cancelAll-inflight-count; B1-B5 Token-Lifecycle (in-flight-wait + fresh-auth + drift + invalidate); C1 multi-page-Trace + **C2 warn bei MAX_PAGES-Truncation** (data may be incomplete); D1 429-retry sleep+attempt; E1+F1 poll-anchors mit Cadence-Berechnung; G1 updateSystem state-tree entry; G2 cleanupMetrics summary; G4 migrateLegacyStates scan-start; I1-I4 Lifecycle inkl. always-log resolved timeoutMs + pollInterval; I4 onUnload-catch ersetzt silent ignore. Plus **H4 Architektur-Fix:** `switch (obj.command)` hatte keinen default-Branch → unknown commands ließen `obj.callback` ungerufen bis ioBroker-Timeout ~5s. Refactor in `lib/message-router.ts` als pure `dispatchMessage(obj, deps)`-Funktion + 6 Regression-Tests (default-branch contract + entry-log-position + checkConnection). Logger an beide BeszelClient-Sites (prod + testClient). Krobi-Pushback im Plan: erst „B+A geplant" verworfen weil Doppelarbeit, direkt A. Test count 262→268 unit |
 | 0.4.3 | 26-Finding 4-Pass-Hardening: token-mutex (B1) + pagination (B2) + 429-retry+Retry-After (B3) + 403-distinct-class (B4') + configurable timeout (B5) + AbortController/cancelAll (B8); main-parallel API/updates/cleanup (M2-M4) + URL-validate (M5) + pollInterval NaN-fix (M6) + terminate(11) (M1); state-mgr-parallel cleanups/migration (SM1-SM3) + defensive Set-iter (SM4) + name-collision suffix via FNV-1a-hash (SM5) + container.health Math.floor (SM7) + FS-percent clamp (SM8) + uptime clamp (SM10); onUnload abort + explicit catch (X1+X2). Tests 253→262. **Hardcore-Regel angewandt — alle 26 Findings umgesetzt, kein Filter.** |
@@ -78,7 +84,8 @@ Nicht getestet (bewusst): main.ts poll-Loop (Adapter-Lifecycle), onMessage (Call
 
 ```bash
 npm run build         # Production (esbuild)
-npm test              # mocha src/**/*.test.ts (via ts-node) + @iobroker/testing packageFiles
+npm test              # vitest src/**/*.test.ts + @iobroker/testing packageFiles (mocha)
+npm run coverage      # vitest run --coverage
 npm run lint          # ESLint
 npm run format:check  # Prettier --check
 npm run check         # tsc --noEmit (Type-Check)

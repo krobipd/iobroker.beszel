@@ -484,6 +484,61 @@ export function coerceContainer(value: unknown): BeszelContainer | null {
 }
 
 /**
+ * v0.5.0 (S1): URL-shape validator. Returns a short reason string when the
+ * URL is unusable, or null when it's OK to hand to the client. Moved from
+ * main.ts so the validator can be unit-tested without an adapter instance.
+ *
+ * @param url The raw URL value from admin config.
+ */
+export function validateHubUrl(url: unknown): string | null {
+  if (typeof url !== "string" || url.trim().length === 0) {
+    return "URL is empty";
+  }
+  try {
+    const u = new URL(url.trim());
+    if (u.protocol !== "http:" && u.protocol !== "https:") {
+      return `protocol '${u.protocol}' is not http(s)`;
+    }
+    if (!u.hostname) {
+      return "hostname is missing";
+    }
+    return null;
+  } catch {
+    return "URL is malformed";
+  }
+}
+
+/**
+ * v0.5.0 (S1+K15): coerce poll-interval to a finite number of seconds,
+ * default 60 s, clamped to [10, 300] — matches admin/jsonConfig.json
+ * min/max so a script bypassing the admin UI cannot push the value
+ * outside the documented range.
+ *
+ * @param raw Raw `pollInterval` from admin config (number or numeric string).
+ */
+export function coercePollInterval(raw: unknown): number {
+  const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
+  if (!Number.isFinite(n)) {
+    return 60;
+  }
+  return Math.max(10, Math.min(300, Math.floor(n)));
+}
+
+/**
+ * v0.5.0 (S1): coerce admin's `requestTimeout` (seconds) to ms. Default
+ * 15 s when missing/unparseable. Clamped to [5 s, 120 s].
+ *
+ * @param raw Raw `requestTimeout` from admin config (number or numeric string).
+ */
+export function coerceTimeoutMs(raw: unknown): number {
+  const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
+  if (!Number.isFinite(n)) {
+    return 15_000;
+  }
+  return Math.max(5, Math.min(120, Math.floor(n))) * 1000;
+}
+
+/**
  * Coerce a PocketBase list response. Each raw item is run through
  * `itemCoercer`; items that fail coercion (return null) are filtered out.
  *

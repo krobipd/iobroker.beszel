@@ -1023,7 +1023,7 @@ describe("BeszelClient", () => {
             // First systems-request was 429 → retry → 200
             const sysCalls = mock.requestLog.filter((r) => r.path.includes("/systems/records"));
             expect(sysCalls.length).to.be.greaterThan(1);
-        }).timeout(10000);
+        }, 10000);
 
         it("surfaces RATE_LIMITED if the retry also gets 429", async () => {
             mock = createMockServer({
@@ -1040,7 +1040,7 @@ describe("BeszelClient", () => {
             } catch (err) {
                 expect((err as NodeJS.ErrnoException).code).to.equal("RATE_LIMITED");
             }
-        }).timeout(10000);
+        }, 10000);
     });
 
     describe("AbortController cancel (B8 v0.4.3)", () => {
@@ -1068,6 +1068,6 @@ describe("BeszelClient", () => {
             } finally {
                 await new Promise<void>((resolve) => hangServer.close(() => resolve()));
             }
-        }).timeout(5000);
+        }, 5000);
     });
 });

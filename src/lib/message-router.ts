@@ -1,5 +1,5 @@
 import { BeszelClient, type BeszelClientLogger } from "./beszel-client";
-import { errText } from "./coerce";
+import { coerceObject, errText } from "./coerce";
 import type { AdapterConfig } from "./types";
 
 /**
@@ -85,10 +85,15 @@ export async function dispatchMessage(obj: ioBroker.Message, deps: MessageRouter
   try {
     switch (obj.command) {
       case "checkConnection": {
-        const config = obj.message as Partial<AdapterConfig>;
-        const url = config.url ?? "";
-        const username = config.username ?? "";
-        const password = config.password ?? "";
+        // v0.5.0 (S3): obj.message is typed `unknown` in @iobroker/types ≥7.1
+        // — a script calling `sendTo("beszel", "checkConnection", null)` used
+        // to throw on `.url` access. Coerce to a plain object first; missing
+        // fields fall through to the "missing url/username/password" branch.
+        const msg = coerceObject(obj.message) ?? {};
+        const config = msg as Partial<AdapterConfig>;
+        const url = typeof config.url === "string" ? config.url : "";
+        const username = typeof config.username === "string" ? config.username : "";
+        const password = typeof config.password === "string" ? config.password : "";
 
         if (!url || !username || !password) {
           // v0.4.4 (H2): trace missing-config before sendTo.

@@ -18,6 +18,35 @@ export type StateName = Record<Lang, string>;
 
 /** State / channel display names (`common.name`). */
 export const STATE_NAMES: Record<string, StateName> = {
+  // ──────── instanceObjects names (v0.5.0 B1+B3) ────────
+  /** `info.connection` state name (was hardcoded en in io-package.json). */
+  connectionStatus: {
+    en: "Connection status",
+    de: "Verbindungsstatus",
+    ru: "Статус подключения",
+    pt: "Estado da ligação",
+    nl: "Verbindingsstatus",
+    fr: "État de la connexion",
+    it: "Stato connessione",
+    es: "Estado de conexión",
+    pl: "Stan połączenia",
+    uk: "Стан з'єднання",
+    "zh-cn": "连接状态",
+  },
+  /** `systems` folder name (was inline 11-lang object in io-package.json). */
+  channelSystems: {
+    en: "Monitored Systems",
+    de: "Überwachte Systeme",
+    ru: "Отслеживаемые системы",
+    pt: "Sistemas monitorizados",
+    nl: "Gecontroleerde systemen",
+    fr: "Systèmes surveillés",
+    it: "Sistemi monitorati",
+    es: "Sistemas monitorizados",
+    pl: "Monitorowane systemy",
+    uk: "Відстежувані системи",
+    "zh-cn": "受监控的系统",
+  },
   // ──────── Channel names ────────
   channelInfo: {
     en: "Info",

@@ -10,11 +10,14 @@ import {
     coerceNumberTuple,
     coerceObject,
     coercePocketBaseList,
+    coercePollInterval,
     coerceString,
     coerceSystem,
     coerceSystemStats,
     coerceSystemStatsRecord,
+    coerceTimeoutMs,
     errText,
+    validateHubUrl,
 } from "./coerce";
 
 describe("coerce", () => {
@@ -640,6 +643,107 @@ describe("coerce", () => {
             a.self = a;
             const result = errText(a);
             expect(result).to.equal("[object Object]");
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // validateHubUrl (v0.5.0 S1)
+    // -----------------------------------------------------------------------
+
+    describe("validateHubUrl", () => {
+        it("accepts http and https URLs", () => {
+            expect(validateHubUrl("http://localhost:8090")).to.be.null;
+            expect(validateHubUrl("https://beszel.example.com")).to.be.null;
+            expect(validateHubUrl("https://192.168.1.100:8090/")).to.be.null;
+        });
+
+        it("rejects empty / non-string", () => {
+            expect(validateHubUrl("")).to.equal("URL is empty");
+            expect(validateHubUrl("   ")).to.equal("URL is empty");
+            expect(validateHubUrl(null)).to.equal("URL is empty");
+            expect(validateHubUrl(undefined)).to.equal("URL is empty");
+            expect(validateHubUrl(42)).to.equal("URL is empty");
+        });
+
+        it("rejects non-http(s) protocols", () => {
+            expect(validateHubUrl("ftp://server")).to.match(/protocol 'ftp:'/);
+            expect(validateHubUrl("ws://server")).to.match(/protocol 'ws:'/);
+            expect(validateHubUrl("file:///etc/passwd")).to.match(/protocol 'file:'/);
+        });
+
+        it("rejects malformed URLs", () => {
+            expect(validateHubUrl("not a url")).to.equal("URL is malformed");
+            expect(validateHubUrl("://nohost")).to.equal("URL is malformed");
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // coercePollInterval (v0.5.0 S1 + K15)
+    // -----------------------------------------------------------------------
+
+    describe("coercePollInterval", () => {
+        it("returns the value when in range", () => {
+            expect(coercePollInterval(60)).to.equal(60);
+            expect(coercePollInterval(10)).to.equal(10);
+            expect(coercePollInterval(300)).to.equal(300);
+        });
+
+        it("parses numeric strings", () => {
+            expect(coercePollInterval("90")).to.equal(90);
+            expect(coercePollInterval("60.7")).to.equal(60);
+        });
+
+        it("clamps below 10 to 10", () => {
+            expect(coercePollInterval(5)).to.equal(10);
+            expect(coercePollInterval(0)).to.equal(10);
+            expect(coercePollInterval(-100)).to.equal(10);
+        });
+
+        it("clamps above 300 to 300 (K15)", () => {
+            expect(coercePollInterval(500)).to.equal(300);
+            expect(coercePollInterval(99999)).to.equal(300);
+            expect(coercePollInterval("9999")).to.equal(300);
+        });
+
+        it("returns default 60 for non-finite / unparseable", () => {
+            expect(coercePollInterval(NaN)).to.equal(60);
+            expect(coercePollInterval(Infinity)).to.equal(60);
+            expect(coercePollInterval(null)).to.equal(60);
+            expect(coercePollInterval(undefined)).to.equal(60);
+            expect(coercePollInterval("not a number")).to.equal(60);
+            expect(coercePollInterval({})).to.equal(60);
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // coerceTimeoutMs (v0.5.0 S1)
+    // -----------------------------------------------------------------------
+
+    describe("coerceTimeoutMs", () => {
+        it("converts seconds to ms", () => {
+            expect(coerceTimeoutMs(15)).to.equal(15_000);
+            expect(coerceTimeoutMs(5)).to.equal(5_000);
+            expect(coerceTimeoutMs(120)).to.equal(120_000);
+        });
+
+        it("parses numeric strings", () => {
+            expect(coerceTimeoutMs("30")).to.equal(30_000);
+        });
+
+        it("clamps below 5 to 5s", () => {
+            expect(coerceTimeoutMs(1)).to.equal(5_000);
+            expect(coerceTimeoutMs(-5)).to.equal(5_000);
+        });
+
+        it("clamps above 120 to 120s", () => {
+            expect(coerceTimeoutMs(600)).to.equal(120_000);
+            expect(coerceTimeoutMs(99999)).to.equal(120_000);
+        });
+
+        it("returns default 15s for non-finite / unparseable", () => {
+            expect(coerceTimeoutMs(NaN)).to.equal(15_000);
+            expect(coerceTimeoutMs(undefined)).to.equal(15_000);
+            expect(coerceTimeoutMs("not a number")).to.equal(15_000);
         });
     });
 });

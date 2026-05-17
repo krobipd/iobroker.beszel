@@ -138,6 +138,37 @@ describe("dispatchMessage", () => {
         });
     });
 
+    describe("obj.message coercion (v0.5.0 S3)", () => {
+        it("treats null obj.message like missing-fields (no throw on property access)", async () => {
+            const h = makeHarness();
+            await dispatchMessage(buildMessage({ message: null as unknown as ioBroker.Message["message"] }), h.deps);
+
+            expect(h.sends).to.have.lengthOf(1);
+            expect(h.sends[0].response).to.deep.equal({
+                success: false,
+                message: "URL, username and password are required",
+            });
+            expect(h.createdClients).to.have.lengthOf(0);
+        });
+
+        it("treats string obj.message like missing-fields (no throw)", async () => {
+            const h = makeHarness();
+            await dispatchMessage(buildMessage({ message: "junk" as unknown as ioBroker.Message["message"] }), h.deps);
+
+            expect(h.sends).to.have.lengthOf(1);
+            expect(h.sends[0].response).to.have.property("success", false);
+            expect(h.createdClients).to.have.lengthOf(0);
+        });
+
+        it("treats array obj.message like missing-fields", async () => {
+            const h = makeHarness();
+            await dispatchMessage(buildMessage({ message: [] as unknown as ioBroker.Message["message"] }), h.deps);
+
+            expect(h.sends).to.have.lengthOf(1);
+            expect(h.sends[0].response).to.have.property("success", false);
+        });
+    });
+
     describe("test-client lifecycle hooks (v0.4.5 cancelAll-Latency)", () => {
         it("calls onTestClientCreated then onTestClientDone — adapter can track + abort at onUnload", async () => {
             const h = makeHarness({ success: true, message: "ok" });

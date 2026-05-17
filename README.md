@@ -45,7 +45,8 @@ Connects to a [Beszel](https://github.com/henrygd/beszel) Hub and exposes server
 | **Beszel Hub URL** | Full URL of your Beszel Hub (e.g. `http://192.168.1.100:8090`) | — |
 | **Username** | Beszel Hub login email/username | — |
 | **Password** | Beszel Hub password | — |
-| **Poll Interval (s)** | How often to fetch data from the Hub | `60` |
+| **Poll Interval (s)** | How often to fetch data from the Hub (10–300) | `60` |
+| **Request Timeout (s)** | Per-request HTTP timeout. Raise for slow Hubs or large container/stats payloads (5–120) | `15` |
 
 Use the **Test Connection** button to verify your credentials before saving.
 
@@ -175,6 +176,10 @@ beszel.0.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+- Hub username and password are both stored encrypted now. The first start after the update migrates existing plain-text usernames automatically.
+- README now documents the Request Timeout setting.
+
 ### 0.4.5 (2026-05-13)
 - Adapter shuts down cleanly even if the "Test Connection" button was still running — the test request is now aborted at unload along with regular polling.
 

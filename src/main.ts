@@ -1,6 +1,7 @@
 import * as utils from "@iobroker/adapter-core";
 import { BeszelClient } from "./lib/beszel-client";
-import { errText } from "./lib/coerce";
+import { coercePollInterval, coerceTimeoutMs, errText, validateHubUrl } from "./lib/coerce";
+import { migrateUsernameEncryption } from "./lib/credential-migration";
 import { dispatchMessage, makeTestClientFactory } from "./lib/message-router";
 import { StateManager } from "./lib/state-manager";
 import type { AdapterConfig } from "./lib/types";
@@ -71,6 +72,14 @@ class BeszelAdapter extends utils.Adapter {
     // so the adapter framework creates them on install. Just set the initial state.
     await this.setStateAsync("info.connection", { val: false, ack: true });
 
+    // v0.5.0 (B4): 1-time migration for users upgrading from v0.4.x — when
+    // `encryptedNative` was extended to include `username`, the framework
+    // tries to auto-decrypt the previously-plaintext value and produces
+    // garbage. Detect + re-encrypt in place before constructing the client.
+    // The migration mutates `this.config.username` in-memory, so `config`
+    // (a typed alias of the same object) reflects the fixed value below.
+    await migrateUsernameEncryption(this);
+
     // Validate required config
     if (!config.url || !config.username || !config.password) {
       this.log.error("URL, username, and password are required — please configure the adapter settings");
@@ -80,14 +89,14 @@ class BeszelAdapter extends utils.Adapter {
     // v0.4.3 (M5): URL-shape validation BEFORE constructing the client.
     // Earlier any string passed through and only the first request rejected
     // with a confusing "Invalid URL" late error.
-    const urlError = BeszelAdapter.validateHubUrl(config.url);
+    const urlError = validateHubUrl(config.url);
     if (urlError) {
       this.log.error(`Beszel Hub URL is invalid — ${urlError}. Adapter will not start.`);
       return;
     }
 
     // v0.4.3 (B5): per-request timeout flows through from admin (default 15s).
-    const timeoutMs = BeszelAdapter.coerceTimeoutMs(config.requestTimeout);
+    const timeoutMs = coerceTimeoutMs(config.requestTimeout);
     // v0.4.4 (I2): always-log resolved timeout. Detecting "drift" from raw
     // is fragile (`"15"` → `15000` is coercion not drift); always-on log
     // line keeps the resolution visible without false-flag logic.
@@ -116,7 +125,7 @@ class BeszelAdapter extends utils.Adapter {
     // v0.4.3 (M6): coerce poll-interval explicitly. `Math.max(10, "30") *
     // 1000` returns NaN, and `setInterval(fn, NaN)` becomes `setInterval(fn,
     // 0)` — a tight loop that hammers the Hub.
-    const pollSec = BeszelAdapter.coercePollInterval(config.pollInterval);
+    const pollSec = coercePollInterval(config.pollInterval);
     // v0.4.4 (I3): always-log resolved poll interval (same reasoning as I2).
     this.log.debug(`pollInterval: raw=${JSON.stringify(config.pollInterval)} resolved=${pollSec}s`);
     const intervalMs = pollSec * 1000;
@@ -125,58 +134,6 @@ class BeszelAdapter extends utils.Adapter {
     }, intervalMs);
 
     this.log.info(`Beszel adapter started — ${this.lastSystemCount} system(s), polling every ${pollSec}s`);
-  }
-
-  /**
-   * v0.4.3 (M5): URL-shape validator. Returns a short reason string when
-   * the URL is unusable, or null when it's OK to hand to the client.
-   *
-   * @param url The raw URL value from admin config.
-   */
-  private static validateHubUrl(url: unknown): string | null {
-    if (typeof url !== "string" || url.trim().length === 0) {
-      return "URL is empty";
-    }
-    try {
-      const u = new URL(url.trim());
-      if (u.protocol !== "http:" && u.protocol !== "https:") {
-        return `protocol '${u.protocol}' is not http(s)`;
-      }
-      if (!u.hostname) {
-        return "hostname is missing";
-      }
-      return null;
-    } catch {
-      return "URL is malformed";
-    }
-  }
-
-  /**
-   * v0.4.3 (M6): coerce poll-interval to a finite number of seconds, default
-   * 60 s, clamped >= 10 s.
-   *
-   * @param raw Raw `pollInterval` from admin config (number or numeric string).
-   */
-  private static coercePollInterval(raw: unknown): number {
-    const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
-    if (!Number.isFinite(n)) {
-      return 60;
-    }
-    return Math.max(10, Math.floor(n));
-  }
-
-  /**
-   * v0.4.3 (B5): coerce admin's `requestTimeout` (seconds) to ms. Default
-   * 15 s when missing/unparseable. Clamped to [5 s, 120 s].
-   *
-   * @param raw Raw `requestTimeout` from admin config (number or numeric string).
-   */
-  private static coerceTimeoutMs(raw: unknown): number {
-    const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
-    if (!Number.isFinite(n)) {
-      return 15_000;
-    }
-    return Math.max(5, Math.min(120, Math.floor(n))) * 1000;
   }
 
   private onUnload(callback: () => void): void {
