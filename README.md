@@ -176,6 +176,9 @@ beszel.0.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+- Removes the automatic credential migration. After upgrading from a pre-0.5.0 version, open the Beszel adapter settings once and save — the framework encrypts your credentials cleanly.
+
 ### 0.5.2 (2026-05-17)
 - Fixes the migration loop introduced in 0.5.0/0.5.1 — usernames that got re-encrypted multiple times are cleared on update. Please re-enter your Beszel credentials in admin once.
 

@@ -1,7 +1,6 @@
 import * as utils from "@iobroker/adapter-core";
 import { BeszelClient } from "./lib/beszel-client";
 import { coercePollInterval, coerceTimeoutMs, errText, validateHubUrl } from "./lib/coerce";
-import { migrateUsernameEncryption } from "./lib/credential-migration";
 import { dispatchMessage, makeTestClientFactory } from "./lib/message-router";
 import { StateManager } from "./lib/state-manager";
 import type { AdapterConfig } from "./lib/types";
@@ -72,17 +71,15 @@ class BeszelAdapter extends utils.Adapter {
     // so the adapter framework creates them on install. Just set the initial state.
     await this.setStateAsync("info.connection", { val: false, ack: true });
 
-    // v0.5.0 (B4): 1-time migration for users upgrading from v0.4.x — when
-    // `encryptedNative` was extended to include `username`, the framework
-    // tries to auto-decrypt the previously-plaintext value and produces
-    // garbage. Detect + re-encrypt in place before constructing the client.
-    // The migration mutates `this.config.username` in-memory, so `config`
-    // (a typed alias of the same object) reflects the fixed value below.
-    await migrateUsernameEncryption(this);
-
     // Validate required config
+    // (v0.5.0 introduced encryptedNative for `username` — users upgrading from
+    //  v0.4.x or older v0.5.x need to open the adapter settings once and save,
+    //  so the framework re-encrypts with the current secret. Detected as empty
+    //  username here; the error message points them at the right place.)
     if (!config.url || !config.username || !config.password) {
-      this.log.error("URL, username, and password are required — please configure the adapter settings");
+      this.log.error(
+        "URL, username, and password are required. If you are upgrading from v0.4.x or earlier v0.5.x: open the Beszel adapter settings in ioBroker Admin and re-enter your username and password once.",
+      );
       return;
     }
 
