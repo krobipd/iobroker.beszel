@@ -3,6 +3,19 @@
     "name": "beszel",
     "version": "0.5.0",
     "news": {
+      "NEXT": {
+        "en": "Restores the encrypted-credentials migration that was incomplete in 0.5.0 — usernames stored as plain text now migrate cleanly on the next start.",
+        "de": "Stellt die in 0.5.0 unvollständige Credentials-Migration wieder her — Klartext-Usernames migrieren beim nächsten Start jetzt sauber.",
+        "ru": "Восстановлено шифрование имени пользователя, неполное в 0.5.0 — открытые имена при следующем запуске мигрируют корректно.",
+        "pt": "Restaura a migração de credenciais que ficou incompleta em 0.5.0 — nomes de utilizador em texto simples migram corretamente no próximo arranque.",
+        "nl": "Herstelt de in 0.5.0 onvolledige migratie van inloggegevens — platte-tekst gebruikersnamen migreren bij de volgende start netjes.",
+        "fr": "Rétablit la migration des identifiants incomplète en 0.5.0 — les noms d'utilisateur en clair migrent proprement au prochain démarrage.",
+        "it": "Ripristina la migrazione delle credenziali incompleta in 0.5.0 — i nomi utente in chiaro migrano correttamente al prossimo avvio.",
+        "es": "Restaura la migración de credenciales que en 0.5.0 quedó incompleta — los nombres de usuario en texto plano migran correctamente al próximo arranque.",
+        "pl": "Przywraca migrację danych logowania, która w 0.5.0 była niepełna — nazwy użytkownika w postaci tekstowej migrują przy następnym uruchomieniu poprawnie.",
+        "uk": "Відновлено міграцію облікових даних, яка була неповною у 0.5.0 — відкриті імена користувача коректно мігрують при наступному запуску.",
+        "zh-cn": "修复 0.5.0 中不完整的凭据迁移——明文用户名将在下次启动时被正确迁移。"
+      },
       "0.5.0": {
         "en": "Hub username is now stored encrypted alongside the password — existing plain-text values are migrated automatically on first start. The Request Timeout option is documented in the README.",
         "de": "Der Hub-Username wird jetzt verschlüsselt gespeichert (wie das Passwort) — bestehende Klartext-Werte werden beim Start automatisch migriert. Request Timeout ist im README dokumentiert.",
@@ -80,19 +93,6 @@
         "pl": "Przywrócono pustą linię między stopką changeloga a sekcją Support (release-script usunął ją w v0.4.0).",
         "uk": "Відновлено порожній рядок між футером changelog та секцією Support (release-script видалив його у v0.4.0).",
         "zh-cn": "恢复了 changelog 页脚与 Support 段落之间的空行（v0.4.0 中被 release-script 吞掉了）。"
-      },
-      "0.4.0": {
-        "en": "State names and log messages localized in 11 ioBroker languages, following the system setting. Object cache cuts js-controller calls per poll. Baseline: Node 22, Admin 7.8.23.",
-        "de": "Datenpunkt-Namen und Log-Meldungen in 11 ioBroker-Sprachen, folgen der Systemsprache. Objekt-Cache spart js-controller-Calls pro Poll. Basis: Node 22, Admin 7.8.23.",
-        "ru": "Имена датчиков и сообщения журнала на 11 языках ioBroker, следуют системному языку. Кэш объектов сокращает вызовы js-controller за опрос. База: Node 22, Admin 7.8.23.",
-        "pt": "Nomes de datapoints e logs em 11 idiomas ioBroker, seguindo o idioma do sistema. Cache de objetos reduz chamadas ao js-controller por polling. Base: Node 22, Admin 7.8.23.",
-        "nl": "Datapunt-namen en logberichten in 11 ioBroker-talen, volgen de systeemtaal. Object-cache bespaart js-controller-aanroepen per poll. Basis: Node 22, Admin 7.8.23.",
-        "fr": "Noms de datapoints et logs traduits en 11 langues ioBroker, suivent la langue système. Le cache d'objets réduit les appels au js-controller par interrogation. Base : Node 22, Admin 7.8.23.",
-        "it": "Nomi dei datapoint e log in 11 lingue ioBroker, seguono la lingua di sistema. La cache degli oggetti riduce le chiamate al js-controller per polling. Base: Node 22, Admin 7.8.23.",
-        "es": "Nombres de datapoints y logs en 11 idiomas ioBroker, siguen el idioma del sistema. La caché de objetos reduce llamadas al js-controller por consulta. Base: Node 22, Admin 7.8.23.",
-        "pl": "Nazwy datapointów i logi w 11 językach ioBroker, podążają za językiem systemu. Cache obiektów ogranicza wywołania js-controller na odpyt. Baza: Node 22, Admin 7.8.23.",
-        "uk": "Назви датапойнтів та логи 11 мовами ioBroker, слідують за системною мовою. Кеш об'єктів зменшує виклики js-controller на опитування. База: Node 22, Admin 7.8.23.",
-        "zh-cn": "数据点名称和日志现支持 11 种 ioBroker 语言，跟随系统语言。对象缓存可减少每次轮询的 js-controller 调用。基线：Node 22，Admin 7.8.23。"
       }
     },
     "titleLang": {
@@ -233,9 +233,11 @@
     }
   ],
   "encryptedNative": [
+    "username",
     "password"
   ],
   "protectedNative": [
+    "username",
     "password"
   ],
   "native": {
