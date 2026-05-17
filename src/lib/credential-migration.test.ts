@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import {
     type CredentialMigrationAdapter,
+    looksLikeCorruptedNestedEncryption,
     looksLikePlaintextUsername,
     migrateUsernameEncryption,
 } from "./credential-migration";
@@ -43,6 +44,33 @@ describe("credential-migration", () => {
             expect(looksLikePlaintextUsername("abc123")).to.equal(false);
             expect(looksLikePlaintextUsername("a")).to.equal(false);
         });
+
+        it("recognises the js-controller $/aes-192-cbc:<iv>:<ct> format as encrypted (v0.5.2 fix)", () => {
+            expect(
+                looksLikePlaintextUsername(
+                    "$/aes-192-cbc:1f2e3d4c5b6a79887766554433221100:8a3c1d2e5f7081927384a5b6c7d8e9f0",
+                ),
+            ).to.equal(false);
+            expect(looksLikePlaintextUsername("$/aes-192-cbc:" + "0".repeat(96))).to.equal(false);
+        });
+    });
+
+    describe("looksLikeCorruptedNestedEncryption", () => {
+        it("returns true if the framework-decrypted value still starts with the encrypted prefix", () => {
+            expect(
+                looksLikeCorruptedNestedEncryption(
+                    "$/aes-192-cbc:abcd1234:ef567890",
+                ),
+            ).to.equal(true);
+        });
+
+        it("returns false for plaintext, empty, non-string", () => {
+            expect(looksLikeCorruptedNestedEncryption("admin@example.com")).to.equal(false);
+            expect(looksLikeCorruptedNestedEncryption("")).to.equal(false);
+            expect(looksLikeCorruptedNestedEncryption(null)).to.equal(false);
+            expect(looksLikeCorruptedNestedEncryption(undefined)).to.equal(false);
+            expect(looksLikeCorruptedNestedEncryption(42)).to.equal(false);
+        });
     });
 
     describe("migrateUsernameEncryption", () => {
@@ -73,6 +101,7 @@ describe("credential-migration", () => {
                     debug: msg => logs.push({ level: "debug", msg }),
                     info: msg => logs.push({ level: "info", msg }),
                     warn: msg => logs.push({ level: "warn", msg }),
+                    error: msg => logs.push({ level: "error", msg }),
                 },
                 encrypt: v => {
                     encryptCalls.push(v);
