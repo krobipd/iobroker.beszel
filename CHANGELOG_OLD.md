@@ -1,4 +1,7 @@
 # Older Changes
+## 0.4.5 (2026-05-13)
+- Adapter shuts down cleanly even if the "Test Connection" button was still running — the test request is now aborted at unload along with regular polling.
+
 ## 0.4.4 (2026-05-13)
 - Debug log traces previously silent paths: HTTP request lifecycle, token authentication, pagination walks and the 429-retry. Default log unchanged.
 - Test Connection in admin no longer hangs on an unknown command — it now gets a clear error response instead.
