@@ -24,7 +24,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_beszel_client = require("./lib/beszel-client");
 var import_coerce = require("./lib/coerce");
-var import_credential_migration = require("./lib/credential-migration");
 var import_message_router = require("./lib/message-router");
 var import_state_manager = require("./lib/state-manager");
 class BeszelAdapter extends utils.Adapter {
@@ -77,9 +76,10 @@ class BeszelAdapter extends utils.Adapter {
       `onReady: starting (url='${config.url}', pollInterval=${JSON.stringify(config.pollInterval)}s, requestTimeout=${JSON.stringify(config.requestTimeout)}s)`
     );
     await this.setStateAsync("info.connection", { val: false, ack: true });
-    await (0, import_credential_migration.migrateUsernameEncryption)(this);
     if (!config.url || !config.username || !config.password) {
-      this.log.error("URL, username, and password are required \u2014 please configure the adapter settings");
+      this.log.error(
+        "URL, username, and password are required. If you are upgrading from v0.4.x or earlier v0.5.x: open the Beszel adapter settings in ioBroker Admin and re-enter your username and password once."
+      );
       return;
     }
     const urlError = (0, import_coerce.validateHubUrl)(config.url);

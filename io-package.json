@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.5.2",
+    "version": "0.5.3",
     "news": {
-      "NEXT": {
+      "0.5.3": {
         "en": "Removes the automatic credential migration. After upgrading from a pre-0.5.0 version, open the Beszel adapter settings once and save — the framework encrypts your credentials cleanly.",
         "de": "Entfernt die automatische Zugangsdaten-Migration. Nach Update von einer Version vor 0.5.0: einmal die Beszel-Einstellungen im Admin öffnen und speichern, dann passt alles.",
         "ru": "Удалена автоматическая миграция учётных данных. После обновления с версии до 0.5.0 откройте настройки Beszel в админке и сохраните — фреймворк зашифрует данные корректно.",

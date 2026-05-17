@@ -176,7 +176,7 @@ beszel.0.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.5.3 (2026-05-17)
 - Removes the automatic credential migration. After upgrading from a pre-0.5.0 version, open the Beszel adapter settings once and save — the framework encrypts your credentials cleanly.
 
 ### 0.5.2 (2026-05-17)
@@ -191,10 +191,6 @@ beszel.0.
 
 ### 0.4.5 (2026-05-13)
 - Adapter shuts down cleanly even if the "Test Connection" button was still running — the test request is now aborted at unload along with regular polling.
-
-### 0.4.4 (2026-05-13)
-- Debug log traces previously silent paths: HTTP request lifecycle, token authentication, pagination walks and the 429-retry. Default log unchanged.
-- Test Connection in admin no longer hangs on an unknown command — it now gets a clear error response instead.
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
