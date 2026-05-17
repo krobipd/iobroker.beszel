@@ -176,7 +176,7 @@ beszel.0.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.5.1 (2026-05-17)
 - Restores the encrypted-credentials migration that was incomplete in 0.5.0 — usernames stored as plain text now migrate cleanly on the next start.
 
 ### 0.5.0 (2026-05-17)
@@ -197,9 +197,6 @@ beszel.0.
 - "Forbidden" (403) responses now show a permission hint instead of looping reauth.
 - Two servers whose names sanitize to the same id no longer overwrite each other — the second gets a hash suffix and a warn so you can rename on the Hub.
 - Adapter shuts down cleanly even if the Hub is slow — pending requests are aborted.
-
-### 0.4.2 (2026-05-09)
-- Adapter log messages are now English only, in line with the ioBroker community standard. Localized state names (11 languages) are unchanged.
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

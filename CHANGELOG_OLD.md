@@ -1,4 +1,7 @@
 # Older Changes
+## 0.4.2 (2026-05-09)
+- Adapter log messages are now English only, in line with the ioBroker community standard. Localized state names (11 languages) are unchanged.
+
 ## 0.4.1 (2026-05-07)
 - Restored the blank line between the changelog footer and the Support section (release-script swallowed it in v0.4.0).
 

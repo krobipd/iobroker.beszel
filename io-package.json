@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "news": {
-      "NEXT": {
+      "0.5.1": {
         "en": "Restores the encrypted-credentials migration that was incomplete in 0.5.0 — usernames stored as plain text now migrate cleanly on the next start.",
         "de": "Stellt die in 0.5.0 unvollständige Credentials-Migration wieder her — Klartext-Usernames migrieren beim nächsten Start jetzt sauber.",
         "ru": "Восстановлено шифрование имени пользователя, неполное в 0.5.0 — открытые имена при следующем запуске мигрируют корректно.",
