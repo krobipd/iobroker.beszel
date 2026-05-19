@@ -176,6 +176,9 @@ beszel.0.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+- Code quality enforced with standard formatting.
+
 ### 0.5.4 (2026-05-17)
 * Internal cleanup. No user-facing changes.
 
