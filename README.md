@@ -176,7 +176,7 @@ beszel.0.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.5.5 (2026-05-19)
 - Code quality enforced with standard formatting.
 
 ### 0.5.4 (2026-05-17)
@@ -190,10 +190,6 @@ beszel.0.
 
 ### 0.5.1 (2026-05-17)
 - Restores the encrypted-credentials migration that was incomplete in 0.5.0 — usernames stored as plain text now migrate cleanly on the next start.
-
-### 0.5.0 (2026-05-17)
-- Hub username and password are both stored encrypted now. The first start after the update migrates existing plain-text usernames automatically.
-- README now documents the Request Timeout setting.
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

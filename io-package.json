@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "beszel",
-    "version": "0.5.4",
+    "version": "0.5.5",
     "news": {
-      "NEXT": {
+      "0.5.5": {
         "en": "Code quality enforced with standard formatting.",
         "de": "Code-Qualität durch einheitliche Formatierung erzwungen.",
         "ru": "Качество кода обеспечено единым форматированием.",

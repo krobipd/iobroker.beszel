@@ -1,4 +1,8 @@
 # Older Changes
+## 0.5.0 (2026-05-17)
+- Hub username and password are both stored encrypted now. The first start after the update migrates existing plain-text usernames automatically.
+- README now documents the Request Timeout setting.
+
 ## 0.4.5 (2026-05-13)
 - Adapter shuts down cleanly even if the "Test Connection" button was still running — the test request is now aborted at unload along with regular polling.
 
